@@ -51,7 +51,10 @@ Session refresh and route gating live in `src/proxy.ts` — Next.js 16 renamed M
 
 ## Getting started
 
+Node 22 or newer — `@supabase/supabase-js` needs native WebSocket, and on Node 20 the client throws at startup. There is an `.nvmrc`, so `nvm use` picks the right version.
+
 ```bash
+nvm use
 npm install
 cp .env.example .env.local   # then fill in the Supabase keys
 npm run dev
