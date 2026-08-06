@@ -1,6 +1,10 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import { requirePublicSupabase } from "@/lib/env";
+import {
+  requirePublicSupabase,
+  SUPABASE_ANON_KEY,
+  SUPABASE_URL,
+} from "@/lib/env";
 
 /**
  * Supabase client bound to the request's cookies.
@@ -32,8 +36,16 @@ export async function createClient() {
   });
 }
 
-/** The signed-in user's profile row, or null when signed out. */
+/**
+ * The signed-in user's profile row, or null when signed out.
+ *
+ * Also returns null when Supabase isn't configured, so an unconfigured deploy
+ * shows the public site and a login prompt rather than a 500 on every
+ * protected route.
+ */
 export async function getSessionProfile() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+
   const supabase = await createClient();
   const {
     data: { user },
