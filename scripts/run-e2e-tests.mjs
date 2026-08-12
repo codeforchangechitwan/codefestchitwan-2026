@@ -53,7 +53,8 @@ async function main() {
     }
     process.exit(1);
   } else {
-    console.log("\x1b[32m✔ ALL E2E TEST SUITES PASSED WITH 100% COVERAGE (M4 GATE CLEARED)\x1b[0m\n");
+    console.log("\x1b[32m✔ ALL STATIC SOURCE CHECKS PASSED\x1b[0m");
+    console.log("\x1b[2m  These assert against file contents; they do not run the app.\x1b[0m\n");
     process.exit(0);
   }
 }

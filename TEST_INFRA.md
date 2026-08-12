@@ -1,19 +1,31 @@
-# E2E Test Infrastructure & Coverage Architecture
+# Static source-check infrastructure
 **Project:** Codefest Chitwan 2026 — Hackathon Platform  
-**Methodology:** Dual Track Quality Assurance Framework  
-**Runner Specification:** Node.js ESM Automated Test Harness (`scripts/run-e2e-tests.mjs`)
+**Runner:** Node.js ESM harness (`scripts/run-e2e-tests.mjs`)
 
 ---
 
-## 1. Test Architecture Overview
+## 1. Architecture overview
 
-The End-to-End (E2E) Test Infrastructure for `codefestchitwan-2026` provides comprehensive, self-contained verification across the entire web application ecosystem. Operating under the Dual Track methodology, the test architecture validates page route integrity, styling contracts, responsive design viewports, auth guard behavior, cross-feature state persistence, and complete real-world user journeys.
+> **Scope warning.** The `test:e2e` script name is a misnomer kept for
+> compatibility. This suite performs **static source inspection only**: it reads
+> project files with `readFileContent()` and asserts on substrings and regexes.
+> It starts no server, renders no component, and executes no route, guard or
+> query. It cannot detect a runtime error, a broken layout, a failed query or a
+> bypassed auth check. Treat a green run as "the expected strings are still in
+> the source", nothing more.
 
-### Key Architectural Layers:
-- **Runner Core (`scripts/run-e2e-tests.mjs`)**: Lightweight, high-performance ESM test runner supporting asynchronous test suite execution, assertion tracking, execution timing, and formatted ANSI summary reports.
-- **Modular Test Suites (`tests/e2e/*.test.mjs`)**: Four isolated test modules targeting distinct coverage tiers.
-- **Route & Render Emulator**: Analyzes React Server Components (RSC), Next.js App Router route conventions, page exports, DOM element trees, and CSS utility contracts.
-- **Auth & Session Guard Simulator**: Validates Supabase SSR session handling, role-based security boundaries (`requireMember`, `requireExecutive`, `requireDeskStaff`), and redirect fallbacks.
+### Key layers
+- **Runner core (`scripts/run-e2e-tests.mjs`)**: small ESM runner handling suite
+  registration, assertion counting, timing and an ANSI summary.
+- **Modular suites (`tests/e2e/*.test.mjs`)**: four modules grouping the checks
+  by theme.
+- **Source-contract checks**: assert that App Router files exist, default-export
+  a component, and still contain agreed contract strings (component names, link
+  hrefs, Tailwind class names, CSS token names).
+- **Auth guard call-site checks**: assert that the *text* `requireMember`,
+  `requireExecutive` or `requireDeskStaff` appears in each protected route file.
+  This confirms the call was not deleted; it does **not** verify that the guard
+  runs, that it rejects the right roles, or that the redirect is correct.
 
 ---
 

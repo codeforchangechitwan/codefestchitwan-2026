@@ -4,7 +4,7 @@
  * auth guard fallbacks, and adversarial inputs.
  */
 
-import { checkFile, readFileContent } from "./test-harness.mjs";
+import { readFileContent } from "./test-harness.mjs";
 
 export function runTier2Tests(runner) {
   runner.suite("Tier 2: Responsive Viewport Breakpoints & Layout Rules", (r) => {
@@ -21,14 +21,13 @@ export function runTier2Tests(runner) {
     });
 
     r.test("768px Tablet Breakpoint — Layout transitions from mobile drawer to inline header nav", () => {
-      const layoutContent = readFileContent("src/app/layout.tsx");
       const headerContent = readFileContent("src/components/site-header.tsx");
+      const layoutContent = readFileContent("src/app/layout.tsx");
       r.assertIncludes(layoutContent, "pb-20 md:pb-0", "Main container padding adjusts from mobile (pb-20 for bottom nav) to tablet/desktop (md:pb-0)");
       r.assertIncludes(headerContent, "md:flex", "Header nav items display inline at md breakpoint (768px)");
     });
 
     r.test("1280px Desktop Viewport — Container constraints limit content width to max-w-5xl", () => {
-      const layoutContent = readFileContent("src/app/layout.tsx");
       const headerContent = readFileContent("src/components/site-header.tsx");
       const homeContent = readFileContent("src/app/page.tsx");
       

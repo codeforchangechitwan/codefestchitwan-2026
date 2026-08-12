@@ -1,14 +1,37 @@
-# TEST READY — E2E Verification & Test Suite Summary Report
+# Static source-check suite — summary report
 **Project:** Codefest Chitwan 2026 — Hackathon Platform  
-**Status:** READY (M4 Milestone Gate Cleared)  
 **Date:** 2026-08-12  
 **Test Runner:** `npm run test:e2e` (`node scripts/run-e2e-tests.mjs`)
 
 ---
 
-## 1. Executive Summary
+## ⚠️ What this suite actually does
 
-The End-to-End (E2E) Test Suite and Infrastructure for `codefestchitwan-2026` has been created, configured, and verified under the Dual Track methodology. All 4 coverage tiers (Feature Coverage, Boundary & Corner Cases, Cross-Feature Combinations, Real-World Application Scenarios) are fully implemented, verified, and ready for deployment pipeline validation.
+**These are not end-to-end tests.** Despite the `test:e2e` script name and the
+tier titles below, every check in `tests/e2e/` reads project files off disk with
+`readFileContent()` and asserts that the text contains an expected substring or
+matches a regex. The whole suite finishes in well under a second because:
+
+- no browser, renderer or HTTP server is ever started;
+- no page is mounted and no component is rendered;
+- no route, auth guard, redirect or database query is executed;
+- the "375px / 768px / 1280px viewport" checks assert that Tailwind class
+  *strings* such as `md:hidden` appear in the source — not that anything lays
+  out correctly at that width;
+- the "user journey" tiers assert that route files reference each other, not
+  that a participant can complete the journey.
+
+They are useful as cheap regression guards against accidental deletion of a
+route, prop or contract string. They are **not** evidence that the application
+works, and a green run here should not be read as a release gate. Real
+verification still requires `npm run build`, a browser pass over the routes,
+and manual checks of the auth and check-in flows.
+
+---
+
+## 1. Summary
+
+Four tiers of source-contract checks are implemented and passing.
 
 - **Test Infrastructure Document**: `TEST_INFRA.md` (Project root)
 - **Master Test Runner**: `scripts/run-e2e-tests.mjs`
@@ -22,19 +45,26 @@ The End-to-End (E2E) Test Suite and Infrastructure for `codefestchitwan-2026` ha
 
 ---
 
-## 2. Test Execution & Coverage Summary
+## 2. Execution summary
 
-| Coverage Tier | Suite Target | Total Tests | Assertions | Status |
-|---------------|--------------|-------------|------------|--------|
-| **Tier 1** | Feature Coverage (24 Routes: Public, Member, Admin) | 27 | 38 | **PASSED** (100%) |
-| **Tier 2** | Boundary & Corner Cases (375px/768px/1280px viewports, theme attributes, auth guards, edge inputs) | 16 | 24 | **PASSED** (100%) |
-| **Tier 3** | Cross-Feature Combinations (Nav alignment, theme sync, form submission states) | 8 | 17 | **PASSED** (100%) |
-| **Tier 4** | Real-World Scenarios (Participant journey & Admin/Desk Staff journey) | 12 | 16 | **PASSED** (100%) |
-| **TOTAL** | **Full E2E Suite** | **63** | **95** | **100% PASSED** |
+Counts below are from an actual run, not estimates. "Checks" are source
+assertions, and the coverage they represent is coverage of *contract strings in
+the source*, not of application behaviour.
+
+| Tier | Suite target | Checks | Status |
+|------|--------------|--------|--------|
+| **Tier 1** | Route files exist and export a component; expected contract strings present (24 routes) | 55 | Passing |
+| **Tier 2** | Responsive class names, theme-token strings, auth-guard call sites | 15 | Passing |
+| **Tier 3** | Nav link lists agree across header/footer/bottom-nav; theme script present; form field names | 7 | Passing |
+| **Tier 4** | Journey route files reference one another in the expected order | 12 | Passing |
+| **TOTAL** | | **89** (132 assertions) | Passing |
 
 ---
 
-## 3. Tier Coverage Breakdown
+## 3. Tier breakdown
+
+Throughout this section, read "verified" / "validated" as **"the expected
+string was found in the source file"** — see the warning at the top.
 
 ### Tier 1: Feature Coverage (Public, Member & Admin Routes)
 - **Public Routes (8/8)**: `/`, `/about`, `/schedule`, `/venue`, `/partners`, `/contact`, `/login`, `/offline` verified for component default exports, metadata, title headers, hero CTA links, countdown timer, closed system notices, and venue details.
@@ -47,7 +77,10 @@ The End-to-End (E2E) Test Suite and Infrastructure for `codefestchitwan-2026` ha
   - `768px` Tablet: Inline header navigation transition (`md:flex`), hidden mobile bottom bar (`md:hidden`), `pb-0` padding reset.
   - `1280px` Desktop: Full container constraint (`max-w-5xl`), multi-column glass grid layouts.
 - **Theme System**: Verified `THEME_SCRIPT` inline head execution, default `data-theme="dark"` attribute, toggle transition to `light`, `MutationObserver` subscription in `ThemeToggle`, and `localStorage` key `cf-theme` persistence.
-- **Security Boundaries**: Verified missing session redirect to `/login`, deactivated account redirect to `/login?error=deactivated`, forced password change redirect to `/profile/password`, non-executive redirect to `/dashboard?error=forbidden`.
+- **Security Boundaries**: Checked that `src/lib/auth.ts` still contains the
+  redirect targets `/login`, `/login?error=deactivated`, `/profile/password` and
+  `/dashboard?error=forbidden`. No session is constructed and no redirect is
+  exercised — these are **not** security tests.
 
 ### Tier 3: Cross-Feature Combinations
 - **Navigation Flow Alignment**: Validated link alignment across `SiteHeader`, `BottomNav`, and `SiteFooter`.
@@ -60,12 +93,24 @@ The End-to-End (E2E) Test Suite and Infrastructure for `codefestchitwan-2026` ha
 
 ---
 
-## 4. How to Execute
+## 4. How to execute
 
-Run the following command in any terminal with Node.js 22+:
+Run the following command in any terminal with Node.js 24 (see `.nvmrc`):
 
 ```bash
 npm run test:e2e
 ```
 
-All 63 tests and 95 assertions will execute asynchronously and output a formatted summary report.
+89 checks and 132 assertions run in well under a second and print a summary.
+
+### What to run alongside it
+
+Because this suite proves nothing about runtime behaviour, releases should also
+clear:
+
+```bash
+npm run lint
+npm run build     # real compile + type check + route generation
+npm run dev       # then walk the public routes and the login → dashboard →
+                  # ID card → desk scan path in a browser, in both themes
+```

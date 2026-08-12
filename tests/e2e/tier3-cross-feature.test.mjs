@@ -4,7 +4,7 @@
  * and multi-step form interactive state flows.
  */
 
-import { checkFile, readFileContent } from "./test-harness.mjs";
+import { readFileContent } from "./test-harness.mjs";
 
 export function runTier3Tests(runner) {
   runner.suite("Tier 3: Navigation Flow Alignment Across Header, Footer & BottomNav", (r) => {

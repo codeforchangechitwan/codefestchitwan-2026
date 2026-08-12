@@ -5,7 +5,7 @@
  * - Scenario 2: Full Executive & Volunteer Desk Staff Journey (Admin Login -> Member Directory -> Submissions -> Desk QR Scan)
  */
 
-import { checkFile, readFileContent } from "./test-harness.mjs";
+import { readFileContent } from "./test-harness.mjs";
 
 export function runTier4Tests(runner) {
   runner.suite("Tier 4: Real-World Scenario 1 — Full Participant Journey", (r) => {
