@@ -7,6 +7,7 @@ import {
   QrCode,
   Shield,
   Shuffle,
+  Timer,
   TriangleAlert,
   UserPlus,
   Users,
@@ -115,6 +116,12 @@ export default async function AdminPage() {
           icon={Gamepad2}
           title="Quizzes"
           body="Publish or hide quizzes and games"
+        />
+        <AdminLink
+          href="/admin/pitch"
+          icon={Timer}
+          title="Pitch timer"
+          body="Stage clock, running order, projector view"
         />
         <AdminLink
           href="/admin/wheel?mode=tables"

@@ -22,6 +22,7 @@ const PROTECTED_PREFIXES = [
   "/admin",
   "/team",
   "/submit",
+  "/pitch",
 ];
 
 export async function proxy(request: NextRequest) {
@@ -80,7 +81,13 @@ export const config = {
     /*
      * Everything except static assets, image optimisation output, and the
      * PWA files that must stay cacheable.
+     *
+     * api/pitch is excluded too: every phone in the hall polls it about every
+     * two seconds, and running auth.getUser() here on each tick would be a
+     * hundred needless auth calls a second. That route guards itself and
+     * answers 401 instead of redirecting; the client refreshes once on 401 to
+     * renew the cookie through a matched route.
      */
-    "/((?!_next/static|_next/image|favicon.ico|icons/|brand/|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icons/|brand/|manifest.webmanifest|sw.js|api/pitch|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

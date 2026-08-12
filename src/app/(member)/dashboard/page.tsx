@@ -6,6 +6,7 @@ import {
   Bell,
   CalendarClock,
   Gamepad2,
+  Presentation,
   QrCode,
   Shield,
   Trophy,
@@ -170,6 +171,12 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
             icon={Trophy}
             title="Leaderboard"
             body="See where you stand"
+          />
+          <QuickLink
+            href="/pitch"
+            icon={Presentation}
+            title="Pitching"
+            body="Running order and the live clock"
           />
           {isDeskStaff && (
             <QuickLink
