@@ -54,16 +54,26 @@ export function ThemeToggle() {
     }
   }
 
+  const isDark = theme === "dark";
+
   return (
     <button
       type="button"
       onClick={toggle}
       aria-label={
-        theme === "dark" ? "Switch to light theme" : "Switch to dark theme"
+        isDark ? "Switch to light theme" : "Switch to dark theme"
       }
-      className="rounded-lg p-2 text-muted transition-colors hover:bg-surface-muted hover:text-foreground"
+      className="group relative flex h-9 w-9 items-center justify-center rounded-xl border border-glass bg-surface-glass/80 text-muted backdrop-blur-md transition-all duration-300 hover:border-brand/40 hover:bg-surface-glass-hover hover:text-foreground hover:shadow-[0_0_15px_rgb(var(--brand-rgb)/0.3)] active:scale-95"
     >
-      {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+      <span className="sr-only">Toggle theme</span>
+      <div className="relative flex items-center justify-center transition-transform duration-500 group-hover:rotate-45">
+        {isDark ? (
+          <Sun size={18} className="text-amber-400 transition-colors group-hover:text-amber-300" />
+        ) : (
+          <Moon size={18} className="text-brand transition-colors group-hover:text-brand-strong" />
+        )}
+      </div>
+      <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand/10 to-accent/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 -z-10" />
     </button>
   );
 }

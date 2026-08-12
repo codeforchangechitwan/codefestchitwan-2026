@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, X, LogIn } from "lucide-react";
+import { Menu, X, LogIn, Sparkles, ChevronRight, UserCheck } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ROLE_LABELS, type Role } from "@/lib/types";
 
@@ -38,16 +38,12 @@ export function SiteHeader({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // Close the drawer whenever the route changes. Adjusting state during render
-  // (rather than in an effect) avoids a second render pass showing the old
-  // drawer on the new page.
   const [lastPathname, setLastPathname] = useState(pathname);
   if (lastPathname !== pathname) {
     setLastPathname(pathname);
     setOpen(false);
   }
 
-  // Prevent the page behind the drawer from scrolling.
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => {
@@ -55,114 +51,163 @@ export function SiteHeader({
     };
   }, [open]);
 
+  const navLinks = signedIn ? MEMBER_LINKS : PUBLIC_LINKS;
+
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur supports-[backdrop-filter]:bg-surface/75">
-      <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-3 px-4">
-        <Link href="/" className="flex items-center gap-2 min-w-0">
-          <Image
-            src="/brand/cfc-logo.png"
-            alt="Code for Change"
-            width={104}
-            height={52}
-            className="h-7 w-auto"
-            priority
-          />
-          <span className="sr-only">Codefest Chitwan 2026</span>
-          <span
-            aria-hidden
-            className="hidden truncate text-sm font-bold tracking-tight text-brand sm:block"
-          >
-            Codefest Chitwan 2026
-          </span>
+    <header className="glass-header sticky top-0 z-50 w-full border-b border-border-glass bg-surface-glass/80 backdrop-blur-xl transition-all duration-300 shadow-glass">
+      <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        {/* Brand Logo & Title with Glass Badge */}
+        <Link
+          href="/"
+          className="group flex items-center gap-3 transition-transform duration-200 hover:scale-[1.02]"
+        >
+          <div className="relative flex items-center justify-center rounded-xl border border-glass bg-surface-muted/60 p-1.5 shadow-inner transition-colors duration-300 group-hover:border-brand/40 group-hover:shadow-[0_0_15px_rgb(var(--brand-rgb)/0.3)]">
+            <Image
+              src="/brand/cfc-logo.png"
+              alt="Code for Change"
+              width={104}
+              height={52}
+              className="h-7 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              priority
+            />
+          </div>
+          <div className="flex flex-col">
+            <span className="bg-gradient-to-r from-brand via-accent to-gold-glow bg-clip-text text-base font-extrabold tracking-tight text-transparent drop-shadow-sm sm:text-lg">
+              Codefest Chitwan
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted">
+              2026 Hackathon
+            </span>
+          </div>
         </Link>
 
-        <nav className="ml-auto hidden items-center gap-1 md:flex">
-          {(signedIn ? MEMBER_LINKS : PUBLIC_LINKS).map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                pathname === link.href
-                  ? "bg-brand-soft text-brand"
-                  : "text-muted hover:bg-surface-muted hover:text-foreground"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+        {/* Desktop Navigation Links */}
+        <nav className="hidden items-center gap-1 md:flex">
+          {navLinks.map((link) => {
+            const isActive =
+              pathname === link.href ||
+              (link.href !== "/" && pathname.startsWith(`${link.href}/`));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`hover-rise relative rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? "bg-gradient-to-r from-brand/20 to-accent/20 text-brand border border-brand/30 shadow-[0_0_12px_rgb(var(--brand-rgb)/0.25)] font-semibold"
+                    : "text-muted hover:bg-surface-glass-hover hover:text-foreground hover:border hover:border-white/5"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1 md:ml-2">
+        {/* Action Buttons & Theme Toggle */}
+        <div className="flex items-center gap-2">
           <ThemeToggle />
 
-          {!signedIn && (
+          {!signedIn ? (
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
+              className="btn-primary-glass hidden items-center gap-2 px-4 py-2 text-sm font-semibold sm:inline-flex"
             >
-              <LogIn size={15} aria-hidden />
-              Log in
+              <LogIn size={16} aria-hidden />
+              <span>Log In</span>
             </Link>
+          ) : (
+            <div className="hidden items-center gap-2 sm:flex">
+              {role === "executive" && (
+                <Link
+                  href="/admin"
+                  className="rounded-xl border border-brand/40 bg-brand/10 px-3 py-1.5 text-xs font-bold text-brand transition-all hover:bg-brand/20 hover:shadow-[0_0_12px_rgb(var(--brand-rgb)/0.3)]"
+                >
+                  Admin Panel
+                </Link>
+              )}
+            </div>
           )}
 
+          {/* Mobile Drawer Trigger */}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
-            className="rounded-lg p-2 text-muted hover:bg-surface-muted hover:text-foreground md:hidden"
+            className="flex items-center justify-center rounded-xl border border-glass bg-surface-glass p-2 text-muted transition-all duration-200 hover:bg-surface-glass-hover hover:text-foreground hover:border-brand/30 md:hidden active:scale-95"
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
+            {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
 
+      {/* Mobile Drawer */}
       {open && (
-        <div className="border-t border-border bg-surface md:hidden">
-          <div className="mx-auto w-full max-w-5xl px-4 py-3">
+        <div className="animate-in fade-in slide-in-from-top-2 duration-200 border-t border-border-glass bg-surface/95 backdrop-blur-2xl md:hidden">
+          <div className="mx-auto w-full max-w-5xl px-4 py-4 space-y-3">
             {signedIn && name && (
-              <p className="mb-2 text-xs text-muted">
-                Signed in as <span className="font-semibold text-foreground">{name}</span>
-                {role ? ` · ${ROLE_LABELS[role]}` : ""}
-              </p>
+              <div className="glass-card flex items-center justify-between p-3 border-brand/20 bg-brand/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/20 text-brand">
+                    <UserCheck size={18} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">{name}</p>
+                    <p className="text-xs text-muted">
+                      {role ? ROLE_LABELS[role] : "Participant"}
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
-            <nav className="grid gap-1">
-              {(signedIn ? MEMBER_LINKS : PUBLIC_LINKS).map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`rounded-lg px-3 py-2.5 text-sm font-medium ${
-                    pathname === link.href
-                      ? "bg-brand-soft text-brand"
-                      : "text-foreground hover:bg-surface-muted"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+
+            <nav className="grid gap-1.5">
+              {navLinks.map((link) => {
+                const isActive =
+                  pathname === link.href ||
+                  (link.href !== "/" && pathname.startsWith(`${link.href}/`));
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all ${
+                      isActive
+                        ? "bg-gradient-to-r from-brand/20 to-accent/20 text-brand border border-brand/30 font-semibold"
+                        : "text-foreground hover:bg-surface-muted hover:text-brand"
+                    }`}
+                  >
+                    <span>{link.label}</span>
+                    <ChevronRight size={16} className="opacity-50" />
+                  </Link>
+                );
+              })}
+
               {role === "executive" && (
                 <Link
                   href="/admin"
-                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-navy hover:bg-surface-muted"
+                  className="flex items-center justify-between rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm font-bold text-brand hover:bg-brand/20"
                 >
-                  Admin panel
+                  <span>Admin Panel</span>
+                  <Sparkles size={16} />
                 </Link>
               )}
+
               {signedIn ? (
-                <form action="/auth/signout" method="post">
+                <form action="/auth/signout" method="post" className="pt-2">
                   <button
                     type="submit"
-                    className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-danger hover:bg-surface-muted"
+                    className="w-full rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-left text-sm font-semibold text-danger transition-all hover:bg-danger/20"
                   >
-                    Sign out
+                    Sign Out
                   </button>
                 </form>
               ) : (
                 <Link
-                  href="/schedule"
-                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-surface-muted"
+                  href="/login"
+                  className="btn-primary-glass mt-2 flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white"
                 >
-                  Event schedule
+                  <LogIn size={16} />
+                  <span>Log In to Portal</span>
                 </Link>
               )}
             </nav>

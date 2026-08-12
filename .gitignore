@@ -38,6 +38,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# scratch state from multi-agent tooling runs, not project source
+.agents
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

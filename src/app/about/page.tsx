@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, Trophy, Users } from "lucide-react";
+import { CheckCircle2, Shield, Trophy, Users, Sparkles } from "lucide-react";
 import { EVENT } from "@/lib/event";
 import { ROLES, ROLE_LABELS } from "@/lib/types";
 
@@ -12,103 +12,130 @@ export const metadata: Metadata = {
 };
 
 const HIGHLIGHTS = [
-  `${EVENT.prizePool} total prize pool`,
-  "48 hours of building, from Friday morning to Sunday afternoon",
-  "Online mentor sessions on Friday evening and Saturday midday",
-  "Quiz and games with a live leaderboard",
-  "Presentations and judging in the Main Hall on Sunday",
+  `${EVENT.prizePool} total prize pool across multiple competition tracks`,
+  "48 hours of non-stop building, from Friday morning to Sunday afternoon",
+  "Online & in-person mentor sessions on Friday evening and Saturday midday",
+  "Interactive quizzes and mini-games with live leaderboard rankings",
+  "Project pitches and final judging in the Main Hall on Sunday",
+];
+
+const ORGANIZERS = [
+  { name: "Code for Change Team", role: "Organizer", bio: "Leading tech initiatives across all 7 provinces." },
+  { name: "Forbes College Faculty", role: "Host Institution", bio: "Providing state-of-the-art labs and main hall facilities." },
+  { name: "Executive Committee", role: "Event Management", bio: "Coordinating schedules, logistics, and participant support." },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8">
-      <h1 className="text-2xl font-bold tracking-tight">About Codefest 2026</h1>
-      <p className="mt-3 text-sm leading-relaxed text-muted">
-        Codefest is organised by <strong className="text-foreground">Code for Change</strong> —{" "}
-        {EVENT.organiserTagline}. The 2026 edition runs across all seven provinces of
-        Nepal, and this is the Chitwan chapter, hosted at {EVENT.venue} in{" "}
-        {EVENT.address}.
-      </p>
+    <div className="relative min-h-screen py-12 px-4 max-w-4xl mx-auto">
+      {/* Background Glow */}
+      <div className="ambient-glow top-10 left-1/2 -translate-x-1/2 w-[500px] h-[300px] opacity-25" />
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-border">
+      {/* Header / Hero */}
+      <div className="text-center max-w-2xl mx-auto mb-10">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand-soft px-3 py-1 text-xs font-bold text-brand mb-3">
+          <Sparkles size={12} />
+          About Codefest 2026
+        </div>
+        <h1 className="text-3xl sm:text-5xl font-black tracking-tight">
+          Transforming Ideas Into Reality
+        </h1>
+        <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed">
+          Organized by <strong className="text-foreground font-semibold">Code for Change</strong> — {EVENT.organiserTagline}. The 2026 edition spans all 7 provinces of Nepal, hosted locally at {EVENT.venue} in {EVENT.address}.
+        </p>
+      </div>
+
+      {/* Banner Card */}
+      <div className="glass-card overflow-hidden border-glass p-2 shadow-2xl mb-12">
         <Image
           src="/brand/codefest-banner.jpg"
-          alt="Codefest 2026 — Transforming ideas into reality. Happening in all 7 provinces."
+          alt="Codefest 2026 — Transforming ideas into reality"
           width={960}
           height={425}
-          className="h-auto w-full"
+          className="h-auto w-full rounded-xl object-cover"
+          priority
         />
       </div>
 
-      <section className="mt-8">
-        <h2 className="flex items-center gap-2 text-lg font-bold">
-          <Trophy size={18} className="text-brand" aria-hidden />
-          What happens over three days
+      {/* Highlights Section */}
+      <section className="glass-card p-6 sm:p-8 border-glass mb-10">
+        <h2 className="flex items-center gap-2.5 text-xl font-bold tracking-tight">
+          <Trophy size={20} className="text-brand" />
+          Event Highlights & Mechanics
         </h2>
-        <ul className="mt-3 grid gap-2">
+        <ul className="mt-4 space-y-3">
           {HIGHLIGHTS.map((item) => (
-            <li key={item} className="flex items-start gap-2 text-sm leading-relaxed">
-              <CheckCircle2
-                size={16}
-                className="mt-0.5 shrink-0 text-brand"
-                aria-hidden
-              />
-              <span className="text-muted">{item}</span>
+            <li key={item} className="flex items-start gap-3 text-sm leading-relaxed">
+              <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-glow" />
+              <span className="text-muted/90">{item}</span>
             </li>
           ))}
         </ul>
-        <Link
-          href="/schedule"
-          className="mt-4 inline-block text-sm font-medium text-brand hover:underline"
-        >
-          See the full timeline →
-        </Link>
+        <div className="mt-6 pt-4 border-t border-border/50">
+          <Link
+            href="/schedule"
+            className="text-xs font-bold uppercase tracking-wider text-brand hover:underline inline-flex items-center gap-1"
+          >
+            Explore Full Event Timeline →
+          </Link>
+        </div>
       </section>
 
-      <section className="mt-8">
-        <h2 className="text-lg font-bold">Who can participate</h2>
-        <p className="mt-2 rounded-xl border border-border bg-surface-muted p-4 text-sm leading-relaxed text-muted">
-          {EVENT.eligibility} Registration closed on {EVENT.registrationDeadline}.
-        </p>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="flex items-center gap-2 text-lg font-bold">
-          <Users size={18} className="text-brand" aria-hidden />
-          Categories on this site
+      {/* Speaker & Organizer Grids */}
+      <section className="mb-10">
+        <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
+          <Users size={20} className="text-brand" />
+          Organizers & Committee
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
-          Everyone involved in Codefest Chitwan has an account in one of six
-          categories. Access to schedules, the identity card, quizzes and the admin
-          tools follows from your category.
-        </p>
-        <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-          {ROLES.map((role) => (
-            <li
-              key={role}
-              className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium"
-            >
-              {ROLE_LABELS[role]}
-            </li>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {ORGANIZERS.map((org) => (
+            <div key={org.name} className="glass-card p-4 border-glass">
+              <div className="h-10 w-10 rounded-full bg-brand-soft border border-brand/30 flex items-center justify-center font-bold text-brand text-sm mb-3">
+                {org.name[0]}
+              </div>
+              <h3 className="font-bold text-sm text-foreground">{org.name}</h3>
+              <p className="text-[11px] font-semibold text-brand mt-0.5">{org.role}</p>
+              <p className="text-xs text-muted mt-2 leading-relaxed">{org.bio}</p>
+            </div>
           ))}
-        </ul>
+        </div>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-border bg-surface p-5">
-        <h2 className="text-lg font-bold">Getting your account</h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
-          There is no public sign-up. The Codefest team creates an account for every
-          registered person and emails the password to the address on the registration
-          form. Sign in, set your own password, and your digital identity card is ready
-          to be scanned at the Registration Desk in Building A.
+      {/* Participant Categories */}
+      <section className="glass-card p-6 sm:p-8 border-glass mb-10">
+        <h2 className="text-xl font-bold tracking-tight mb-2">Access Categories</h2>
+        <p className="text-xs text-muted mb-4">
+          Every participant, mentor, judge, and volunteer is assigned an explicit system category.
         </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {ROLES.map((role) => (
+            <div key={role} className="glass-card p-3.5 border-white/5 bg-surface/30 flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-brand" />
+              <span className="text-xs font-semibold text-foreground">{ROLE_LABELS[role]}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Account Provisioning Card */}
+      <section className="glass-card p-6 border-brand/30 bg-brand-soft/20 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div>
+          <h2 className="text-lg font-bold flex items-center gap-2 justify-center sm:justify-start">
+            <Shield size={18} className="text-brand" />
+            Account Information
+          </h2>
+          <p className="mt-1 text-xs text-muted leading-relaxed max-w-xl">
+            Accounts are provisioned automatically from the registration roster. Check your email for login credentials or visit Building A Desk for assistance.
+          </p>
+        </div>
         <Link
           href="/login"
-          className="mt-4 inline-flex rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-strong"
+          className="btn-primary-glass px-5 py-2.5 text-xs font-bold whitespace-nowrap"
         >
-          Member login
+          Sign In To Portal
         </Link>
       </section>
     </div>
   );
 }
+

@@ -8,6 +8,8 @@ import {
   QrCode,
   Trophy,
   Users,
+  Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { Countdown } from "@/components/countdown";
 import { EVENT } from "@/lib/event";
@@ -27,13 +29,13 @@ const FEATURES = [
   {
     icon: CalendarDays,
     title: "Live schedule",
-    body: "Every session from Friday 7:00 AM registration to the Sunday closing ceremony, with the zone for each slot.",
+    body: "Every session from Friday 7:00 AM registration to Sunday closing ceremony, with zones for each slot.",
     href: "/schedule",
   },
   {
     icon: QrCode,
     title: "Digital identity card",
-    body: "Your QR identity card lives in the app. The registration desk scans it to check you in.",
+    body: "Your QR identity card lives in the app. The registration desk scans it for instant check-in.",
     href: "/id-card",
   },
   {
@@ -45,150 +47,162 @@ const FEATURES = [
   {
     icon: MapPin,
     title: "Venue map",
-    body: "Buildings A, B and C at Forbes College — registration, food and the main hall.",
+    body: "Buildings A, B and C at Forbes College — registration, fooding and the main hall.",
     href: "/venue",
   },
 ];
 
 export default function HomePage() {
   return (
-    <>
-      {/* Hero ------------------------------------------------------------- */}
-      <section className="relative overflow-hidden bg-brand text-white">
-        <div className="absolute inset-0 opacity-20">
-          <Image
-            src="/brand/chitwan-poster.jpg"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-right"
-          />
+    <div className="relative overflow-hidden">
+      {/* Background Ambient Radial Glows */}
+      <div className="ambient-glow top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] opacity-30 animate-pulse-glow" />
+      <div className="ambient-glow top-[600px] right-0 w-[400px] h-[300px] opacity-20" />
+
+      {/* Hero Section */}
+      <section className="relative px-4 pt-12 pb-16 sm:pt-20 sm:pb-24 max-w-5xl mx-auto">
+        <div className="glass-card relative overflow-hidden p-6 sm:p-12 border border-glass bg-surface-glass backdrop-blur-2xl shadow-2xl">
+          {/* Subtle Banner Backdrop */}
+          <div className="absolute inset-0 opacity-15 pointer-events-none">
+            <Image
+              src="/brand/chitwan-poster.jpg"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-center filter blur-xs"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-surface-glass/80 to-transparent" />
+          </div>
+
+          <div className="relative z-10 max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand-soft px-3.5 py-1 text-xs font-bold text-brand backdrop-blur-md">
+              <Sparkles size={14} className="animate-spin" />
+              {EVENT.scope}
+            </div>
+
+            <h1 className="mt-4 text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+              Codefest 2026{" "}
+              <span className="bg-gradient-to-r from-brand via-accent to-gold-glow bg-clip-text text-transparent block">
+                Chitwan Hackathon
+              </span>
+            </h1>
+
+            <p className="mt-4 text-base sm:text-lg text-muted/90 leading-relaxed font-normal">
+              {EVENT.tagline}. Three days of high-octane building at {EVENT.venue},{" "}
+              {EVENT.address} — {EVENT.datesNepali} ({EVENT.datesEnglish}).
+            </p>
+
+            <div className="mt-8 grid grid-cols-2 gap-4 max-w-md">
+              <div className="glass-card p-3.5 border-glass bg-surface/40 backdrop-blur-md">
+                <p className="text-[11px] uppercase tracking-wider font-semibold text-muted">
+                  Total Prize Pool
+                </p>
+                <p className="mt-1 text-xl sm:text-2xl font-black text-foreground">
+                  {EVENT.prizePool}
+                </p>
+              </div>
+              <div className="glass-card p-3.5 border-glass bg-surface/40 backdrop-blur-md">
+                <p className="text-[11px] uppercase tracking-wider font-semibold text-muted">
+                  Event Dates
+                </p>
+                <p className="mt-1 text-xl sm:text-2xl font-black text-foreground">
+                  Aug 14–16
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <Countdown target={EVENT.startsAt} label="Registration desk opens in" />
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link
+                href="/login"
+                className="btn-primary-glass inline-flex items-center gap-2.5 px-6 py-3.5 text-sm font-bold shadow-lg"
+              >
+                Member login
+                <ArrowRight size={16} aria-hidden />
+              </Link>
+              <Link
+                href="/schedule"
+                className="inline-flex items-center gap-2.5 rounded-xl border border-white/15 bg-surface-glass px-6 py-3.5 text-sm font-semibold text-foreground backdrop-blur-md hover:bg-surface-glass-hover hover:border-white/25 transition-all"
+              >
+                View schedule
+              </Link>
+            </div>
+
+            <p className="mt-5 text-xs text-muted/80 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-glow" />
+              {EVENT.eligibility}
+            </p>
+          </div>
         </div>
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-gradient-to-br from-brand via-brand/95 to-brand-strong/80"
-        />
+      </section>
 
-        <div className="relative mx-auto w-full max-w-5xl px-4 py-12 sm:py-16">
-          <p className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
-            {EVENT.scope}
-          </p>
-
-          <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            Codefest 2026
-            <span className="block text-accent">Chitwan Hackathon</span>
-          </h1>
-
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base">
-            {EVENT.tagline}. Three days of building at {EVENT.venue},{" "}
-            {EVENT.address} — {EVENT.datesNepali} ({EVENT.datesEnglish}).
-          </p>
-
-          <dl className="mt-6 grid grid-cols-2 gap-3 sm:max-w-lg">
-            <div className="rounded-xl bg-white/12 p-3 backdrop-blur">
-              <dt className="text-[11px] uppercase tracking-wide text-white/70">
-                Total prize pool
-              </dt>
-              <dd className="mt-0.5 text-lg font-bold">{EVENT.prizePool}</dd>
-            </div>
-            <div className="rounded-xl bg-white/12 p-3 backdrop-blur">
-              <dt className="text-[11px] uppercase tracking-wide text-white/70">
-                Dates
-              </dt>
-              <dd className="mt-0.5 text-lg font-bold">Aug 14–16</dd>
-            </div>
-          </dl>
-
-          <div className="mt-6">
-            <Countdown target={EVENT.startsAt} label="Registration desk opens in" />
-          </div>
-
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-brand transition-transform hover:scale-[1.02]"
-            >
-              Member login
-              <ArrowRight size={16} aria-hidden />
-            </Link>
-            <Link
-              href="/schedule"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/40 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-            >
-              View schedule
-            </Link>
-          </div>
-
-          <p className="mt-5 text-xs text-white/70">
-            {EVENT.eligibility}
+      {/* Closed System Notice */}
+      <section className="px-4 max-w-5xl mx-auto mb-12">
+        <div className="glass-card p-4 sm:p-5 border-brand/20 bg-brand-soft/10 flex items-start gap-3.5">
+          <ShieldCheck size={20} className="text-brand shrink-0 mt-0.5" />
+          <p className="text-xs sm:text-sm text-muted leading-relaxed">
+            <strong className="text-foreground font-semibold">Closed Registration System:</strong>{" "}
+            This is a closed system. Accounts are created exclusively for registered participants, executives, volunteers, mentors, judges, and invited guests. Your password is emailed directly to your registered address.
           </p>
         </div>
       </section>
 
-      {/* Closed system notice --------------------------------------------- */}
-      <section className="border-b border-border bg-surface-muted">
-        <div className="mx-auto w-full max-w-5xl px-4 py-5">
-          <p className="text-sm leading-relaxed text-muted">
-            <strong className="text-foreground">This is a closed system.</strong>{" "}
-            Accounts are created only for people on the Codefest registration list —
-            executive members, volunteers, mentors, judges, participants and invited
-            guests. Your password is emailed to the address you registered with.
-          </p>
+      {/* Features Grid */}
+      <section className="px-4 py-8 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">App Experience</h2>
+            <p className="text-xs text-muted mt-1">Key portals available during the 3-day hackathon</p>
+          </div>
         </div>
-      </section>
-
-      {/* Features ---------------------------------------------------------- */}
-      <section className="mx-auto w-full max-w-5xl px-4 py-10">
-        <h2 className="text-xl font-bold tracking-tight">What&rsquo;s in the app</h2>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map(({ icon: Icon, title, body, href }) => (
             <Link
               key={title}
               href={href}
-              className="group rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-brand/40"
+              className="glass-card p-5 group hover-rise transition-all duration-300 border-glass hover:border-brand/40 flex flex-col justify-between"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand">
-                <Icon size={20} aria-hidden />
-              </span>
-              <h3 className="mt-3 font-semibold">{title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted">{body}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-brand">
-                Open
-                <ArrowRight
-                  size={14}
-                  aria-hidden
-                  className="transition-transform group-hover:translate-x-0.5"
-                />
+              <div>
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand group-hover:scale-110 transition-transform">
+                  <Icon size={22} aria-hidden />
+                </span>
+                <h3 className="mt-4 font-bold text-base text-foreground">{title}</h3>
+                <p className="mt-2 text-xs leading-relaxed text-muted/90">{body}</p>
+              </div>
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-brand">
+                Explore feature
+                <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
               </span>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Who's taking part -------------------------------------------------- */}
-      <section className="border-y border-border bg-surface-muted">
-        <div className="mx-auto w-full max-w-5xl px-4 py-10">
-          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
-            <Users size={20} className="text-brand" aria-hidden />
-            Who&rsquo;s taking part
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Every account belongs to one of these categories. Your category decides
-            what you see once you sign in.
+      {/* Role Categories */}
+      <section className="px-4 py-12 max-w-5xl mx-auto">
+        <div className="glass-card p-6 sm:p-8 border-glass">
+          <div className="flex items-center gap-2.5 mb-2">
+            <Users size={22} className="text-brand" />
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Participant Roles & Access</h2>
+          </div>
+          <p className="text-xs sm:text-sm text-muted mb-6">
+            Your assigned role determines accessible portals, check-in privileges, and quiz modules.
           </p>
 
-          <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {ROLES.map((role) => (
               <li
                 key={role}
-                className="rounded-2xl border border-border bg-surface p-4"
+                className="glass-card p-4 border-white/5 bg-surface/40 hover:border-brand/30 transition-colors"
               >
-                <p className="text-sm font-semibold text-brand">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-brand bg-brand-soft px-2.5 py-1 rounded-md inline-block mb-2">
                   {ROLE_LABELS[role]}
-                </p>
-                <p className="mt-1 text-sm leading-relaxed text-muted">
+                </span>
+                <p className="text-xs text-muted leading-relaxed">
                   {ROLE_BLURBS[role]}
                 </p>
               </li>
@@ -197,48 +211,45 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Prize + partners teaser -------------------------------------------- */}
-      <section className="mx-auto w-full max-w-5xl px-4 py-10">
-        <div className="rounded-2xl border border-border bg-surface p-6">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent">
-            <Trophy size={20} aria-hidden />
-          </span>
-          <h2 className="mt-3 text-xl font-bold tracking-tight">
-            {EVENT.prizePool} total prize pool
-          </h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted">
-            Registration closed {EVENT.registrationDeadline}. Winners are announced at
-            the closing ceremony in the Main Hall on Sunday, 16 August.
-          </p>
-        </div>
-
-        <div className="mt-8">
-          <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-xl font-bold tracking-tight">
-              {PARTNERS.length} partners
-            </h2>
-            <Link
-              href="/partners"
-              className="text-sm font-medium text-brand hover:underline"
-            >
-              See all
-            </Link>
+      {/* Prize & Partners Summary */}
+      <section className="px-4 py-8 max-w-5xl mx-auto mb-16">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="glass-card p-6 border-accent/30 bg-accent-soft/20 lg:col-span-1 flex flex-col justify-between">
+            <div>
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20 text-accent mb-4">
+                <Trophy size={24} />
+              </span>
+              <h3 className="text-xl font-bold">{EVENT.prizePool} Prize Pool</h3>
+              <p className="mt-2 text-xs text-muted leading-relaxed">
+                Registration closed {EVENT.registrationDeadline}. Winners announced Sunday afternoon in the Main Hall.
+              </p>
+            </div>
           </div>
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {PARTNERS.slice(0, 12).map((partner) => (
-              <li
-                key={partner.name}
-                className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted"
-              >
-                {partner.name}
+
+          <div className="glass-card p-6 border-glass lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">{PARTNERS.length} Event Partners</h3>
+              <Link href="/partners" className="text-xs font-semibold text-brand hover:underline">
+                View all partner details →
+              </Link>
+            </div>
+            <ul className="flex flex-wrap gap-2">
+              {PARTNERS.slice(0, 10).map((partner) => (
+                <li
+                  key={partner.name}
+                  className="rounded-lg border border-glass bg-surface/50 px-3 py-1.5 text-xs font-medium text-muted hover:text-foreground hover:border-white/20 transition-colors"
+                >
+                  {partner.name}
+                </li>
+              ))}
+              <li className="rounded-lg bg-brand-soft border border-brand/20 px-3 py-1.5 text-xs font-semibold text-brand">
+                +{Math.max(PARTNERS.length - 10, 0)} more
               </li>
-            ))}
-            <li className="rounded-full bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand">
-              +{Math.max(PARTNERS.length - 12, 0)} more
-            </li>
-          </ul>
+            </ul>
+          </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }
+

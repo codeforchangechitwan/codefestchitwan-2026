@@ -59,10 +59,10 @@ export function BottomNav({
 
   return (
     <nav
-      aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden"
+      aria-label="Mobile Navigation"
+      className="fixed bottom-0 inset-x-3 mb-3 z-50 rounded-2xl border border-glass bg-surface-glass/85 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] pb-[env(safe-area-inset-bottom)] md:hidden transition-all duration-300"
     >
-      <ul className="mx-auto grid max-w-5xl grid-cols-5">
+      <ul className="mx-auto grid max-w-md grid-cols-5 items-center p-1.5">
         {tabs.map(({ href, label, icon: Icon }) => {
           const active =
             pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
@@ -71,18 +71,29 @@ export function BottomNav({
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${
-                  active ? "text-brand" : "text-muted"
+                className={`group flex flex-col items-center gap-0.5 py-1 text-[10px] font-semibold transition-all duration-200 active:scale-95 ${
+                  active ? "text-brand" : "text-muted hover:text-foreground"
                 }`}
               >
                 <span
-                  className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
-                    active ? "bg-brand-soft" : ""
+                  className={`relative flex h-8 w-12 items-center justify-center rounded-xl transition-all duration-300 ${
+                    active
+                      ? "bg-gradient-to-r from-brand/25 to-accent/25 text-brand shadow-[0_0_12px_rgb(var(--brand-rgb)/0.4)] border border-brand/30 scale-105"
+                      : "group-hover:bg-surface-glass-hover"
                   }`}
                 >
-                  <Icon size={18} aria-hidden />
+                  <Icon
+                    size={19}
+                    aria-hidden
+                    className={`transition-transform duration-300 ${
+                      active ? "scale-110 stroke-[2.5px]" : "stroke-[1.8px]"
+                    }`}
+                  />
+                  {active && (
+                    <span className="absolute -top-1 h-1 w-2 rounded-full bg-brand shadow-[0_0_6px_rgb(var(--brand-rgb))]" />
+                  )}
                 </span>
-                {label}
+                <span className="truncate">{label}</span>
               </Link>
             </li>
           );
