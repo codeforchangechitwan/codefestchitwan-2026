@@ -136,6 +136,20 @@ npm run build && npm start
   from public.schedule_events order by day, sort_order;
   ```
 - **Icons**: regenerate with `python3 scripts/gen-icons.py`.
+- **Bulk intake**: `scripts/import-registrations.mjs` turns the four registration
+  spreadsheets into accounts, teams and a credentials CSV. Dry-run by default,
+  idempotent, and it never emails anyone — passwords go to a `0600` file for the
+  team to hand out. Re-running after a corrected sheet preserves every password
+  already issued unless you pass `--reset-passwords`.
+- **Placeholder names**: the executive and mentor sheets have no name column, so
+  those accounts fall back to the email local part.
+  `scripts/normalise-identities.mjs` derives real names where it safely can and
+  prints the rest for a human; pass `--names=names.csv` (`email,full_name`) to
+  settle them. It never guesses a login address — `--emails` is a separate flag
+  and only ever touches high-confidence rows.
+- **`NEXT_PUBLIC_SITE_URL` before printing badges**: the import withholds the
+  `card_url` column while it points at localhost, because a badge that resolves
+  to somebody's laptop is not discovered until it is scanned at the desk.
 
 ## Licence
 

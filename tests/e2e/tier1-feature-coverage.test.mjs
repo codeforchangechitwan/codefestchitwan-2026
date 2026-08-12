@@ -261,6 +261,45 @@ export function runTier1Tests(runner) {
       const ignore = readFileContent(".gitignore");
       r.assertIncludes(ignore, "credentials", "gitignore must cover the credentials CSV");
     });
+
+    r.test("A derived name never overwrites a real one on re-import", () => {
+      const script = readFileContent("scripts/import-registrations.mjs");
+      r.assertIncludes(script, "name_derived", "Derived names must be flagged at parse time");
+      r.assert(
+        /if \(!person\.name_derived \|\| !existing\)/.test(script),
+        "full_name must only be written when the sheet supplied it, or the account is new"
+      );
+    });
+
+    r.test("Import survives an organiser's login address being changed", () => {
+      const script = readFileContent("scripts/import-registrations.mjs");
+      r.assertIncludes(
+        script,
+        "Previously ",
+        "loadExistingUsers must index the previous address, or a re-run duplicates the account"
+      );
+    });
+
+    r.test("Badge links are withheld when the site origin is localhost", () => {
+      const script = readFileContent("scripts/import-registrations.mjs");
+      r.assertIncludes(script, "cardUrlsUsable", "A localhost card_url must not be written");
+      r.assertIncludes(script, "localhost", "The localhost guard must actually test for it");
+    });
+
+    r.test("Identity normalisation is dry-run by default and gates email changes", () => {
+      const script = readFileContent("scripts/normalise-identities.mjs");
+      r.assertIncludes(script, 'args.includes("--commit")', "Must require --commit to write");
+      r.assertIncludes(script, 'args.includes("--emails")', "Email changes need their own flag");
+      r.assert(
+        /confidence === "high"/.test(script),
+        "Only high-confidence derivations may be applied automatically"
+      );
+      r.assertIncludes(
+        script,
+        "ORG_EMAIL_ROLES",
+        "Organisation addresses must be restricted to the organising team"
+      );
+    });
   });
 
   runner.suite("Tier 1: Feature Coverage — Executive Download Routes", (r) => {

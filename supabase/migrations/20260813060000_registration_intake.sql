@@ -26,7 +26,11 @@ alter table public.profiles
   add column if not exists title text,
   add column if not exists food_preference text,
   add column if not exists allergy text,
-  add column if not exists medical_note text;
+  add column if not exists medical_note text,
+  -- Organiser scratch note. Written by normalise-identities.mjs to record a
+  -- previous login address, so somebody locked out on Friday morning can be
+  -- traced back to the row they came in on.
+  add column if not exists notes text;
 
 comment on column public.profiles.medical_note is
   'Health information from the registration form. Readable only by the member '
