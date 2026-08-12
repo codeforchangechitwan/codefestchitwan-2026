@@ -110,6 +110,16 @@ export type Profile = {
   email: string;
   full_name: string;
   role: Role;
+  /** Executive portfolio ("Tech Lead") or a judge's affiliation. Display only. */
+  title: string | null;
+  food_preference: string | null;
+  allergy: string | null;
+  /**
+   * Health information from the registration form. RLS keeps `profiles`
+   * executive-only, and participant_directory() omits this column, so desk
+   * volunteers never receive it.
+   */
+  medical_note: string | null;
   team_id: string | null;
   /** Denormalised cache of teams.name, kept in sync by a database trigger. */
   team_name: string | null;
@@ -146,6 +156,24 @@ export type Submission = {
 export type EventSettings = {
   submission_deadline: string;
   submissions_open: boolean;
+  /** While false, the judging panel sees no submissions at all. */
+  judging_open: boolean;
+};
+
+/** One row of participant_directory() — never exposes qr_token or health data. */
+export type DirectoryEntry = {
+  profile_id: string;
+  full_name: string;
+  email: string;
+  role: Role;
+  title: string | null;
+  team_name: string | null;
+  institution: string | null;
+  room: string | null;
+  phone: string | null;
+  food_preference: string | null;
+  checked_in_at: string | null;
+  is_active: boolean;
 };
 
 export type ScheduleEvent = {

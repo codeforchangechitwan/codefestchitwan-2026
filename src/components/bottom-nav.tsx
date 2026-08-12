@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
+  ContactRound,
   Gamepad2,
+  Gavel,
   Home,
   Info,
   LogIn,
@@ -42,6 +44,27 @@ const EXEC_TABS: Tab[] = [
   { href: "/admin", label: "Admin", icon: Shield },
 ];
 
+/*
+ * Volunteers were getting MEMBER_TABS, which has no route to the scanner —
+ * the one thing the role exists to do. The desk works off a phone, and the
+ * bottom bar is the whole navigation on a phone.
+ */
+const VOLUNTEER_TABS: Tab[] = [
+  { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/admin/scan", label: "Scan", icon: QrCode },
+  { href: "/admin/roster", label: "Roster", icon: ContactRound },
+  { href: "/schedule", label: "Schedule", icon: CalendarDays },
+  { href: "/id-card", label: "ID Card", icon: QrCode },
+];
+
+const JUDGE_TABS: Tab[] = [
+  { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/judge", label: "Judging", icon: Gavel },
+  { href: "/schedule", label: "Schedule", icon: CalendarDays },
+  { href: "/id-card", label: "ID Card", icon: QrCode },
+  { href: "/profile", label: "Profile", icon: User },
+];
+
 export function BottomNav({
   signedIn,
   role,
@@ -55,7 +78,11 @@ export function BottomNav({
     ? PUBLIC_TABS
     : role === "executive"
       ? EXEC_TABS
-      : MEMBER_TABS;
+      : role === "volunteer"
+        ? VOLUNTEER_TABS
+        : role === "judge"
+          ? JUDGE_TABS
+          : MEMBER_TABS;
 
   return (
     <nav

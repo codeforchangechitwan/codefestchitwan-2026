@@ -60,6 +60,21 @@ export async function requireExecutiveApi() {
   return { session, response: null };
 }
 
+/**
+ * Guard for the judging panel.
+ *
+ * Executives are let through as well — they run the room on Sunday and are
+ * the ones who will be asked why a judge's screen is empty.
+ */
+export async function requireJudge() {
+  const session = await requireMember();
+  const allowed: Role[] = ["judge", "executive"];
+  if (!allowed.includes(session.profile.role)) {
+    redirect("/dashboard?error=forbidden");
+  }
+  return session;
+}
+
 /** Guard for the check-in scanner, which volunteers also operate. */
 export async function requireDeskStaff() {
   const session = await requireMember();

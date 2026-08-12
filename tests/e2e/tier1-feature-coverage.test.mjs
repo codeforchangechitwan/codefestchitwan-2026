@@ -159,6 +159,8 @@ export function runTier1Tests(runner) {
       { path: "src/app/(member)/admin/attendance/page.tsx", route: "/admin/attendance", name: "Attendance Log" },
       { path: "src/app/(member)/admin/teams/page.tsx", route: "/admin/teams", name: "Team Directory" },
       { path: "src/app/(member)/admin/teams/[id]/page.tsx", route: "/admin/teams/[id]", name: "Team Detail" },
+      { path: "src/app/(member)/admin/roster/page.tsx", route: "/admin/roster", name: "Desk Roster" },
+      { path: "src/app/(member)/judge/page.tsx", route: "/judge", name: "Judging Panel" },
     ];
 
     for (const item of adminRoutes) {
@@ -169,8 +171,8 @@ export function runTier1Tests(runner) {
       r.test(`Admin Route [${item.route}] integrates executive or desk staff guard`, () => {
         const content = readFileContent(item.path);
         r.assert(
-          content.includes("requireExecutive") || content.includes("requireDeskStaff") || content.includes("requireMember"),
-          `Admin page ${item.route} must enforce admin role check`
+          content.includes("requireExecutive") || content.includes("requireDeskStaff") || content.includes("requireJudge") || content.includes("requireMember"),
+          `Admin page ${item.route} must enforce a role guard`
         );
       });
     }
@@ -206,6 +208,58 @@ export function runTier1Tests(runner) {
       const content = readFileContent("src/app/(member)/admin/teams/[id]/page.tsx");
       r.assertIncludes(content, "TeamRoster", "Team detail page must mount the roster editor");
       r.assertIncludes(content, "team_id", "Team detail page must load members by team_id");
+    });
+  });
+
+  runner.suite("Tier 1: Feature Coverage — Registration Intake & Judging", (r) => {
+    r.test("Judging panel is gated on the database, not just the UI", () => {
+      const sql = readFileContent("supabase/migrations/20260813060000_registration_intake.sql");
+      r.assertIncludes(sql, "is_judge()", "A judge predicate must exist");
+      r.assertIncludes(sql, "judging_is_open()", "The judging lever must be a function RLS can call");
+      r.assert(
+        /submissions_read[\s\S]{0,400}is_judge\(\) and public\.judging_is_open\(\)/.test(sql),
+        "submissions_read must admit judges only while judging is open"
+      );
+    });
+
+    r.test("Desk-staff directory never exposes card tokens or health data", () => {
+      const sql = readFileContent("supabase/migrations/20260813060000_registration_intake.sql");
+      const body = sql.slice(sql.indexOf("function public.participant_directory"));
+      r.assert(
+        !body.includes("qr_token"),
+        "participant_directory() must not return qr_token — that is a working identity card"
+      );
+      r.assert(
+        !/returns table[\s\S]{0,600}medical_note/.test(body),
+        "participant_directory() must not return medical_note"
+      );
+      r.assertIncludes(body, "is_desk_staff()", "The projection must check desk staff itself");
+    });
+
+    r.test("Judge route enforces the judge guard", () => {
+      const content = readFileContent("src/app/(member)/judge/page.tsx");
+      r.assertIncludes(content, "requireJudge", "/judge must call requireJudge()");
+      r.assertIncludes(content, "judging_open", "/judge must respect the judging lever");
+    });
+
+    r.test("/judge is gated by the proxy", () => {
+      const proxy = readFileContent("src/proxy.ts");
+      r.assertIncludes(proxy, '"/judge"', "PROTECTED_PREFIXES must include /judge");
+    });
+
+    r.test("Import script never mails credentials and defaults to a dry run", () => {
+      const script = readFileContent("scripts/import-registrations.mjs");
+      r.assert(
+        !/nodemailer|sendCredentialsEmail|sendMail/.test(script),
+        "The bulk import must not send email — a hundred messages must not be one flag away"
+      );
+      r.assertIncludes(script, "const dryRun = !commit", "Import must require --commit to write");
+      r.assertIncludes(script, "0o600", "The credentials file must be written 0600");
+    });
+
+    r.test("Credentials export cannot be committed", () => {
+      const ignore = readFileContent(".gitignore");
+      r.assertIncludes(ignore, "credentials", "gitignore must cover the credentials CSV");
     });
   });
 

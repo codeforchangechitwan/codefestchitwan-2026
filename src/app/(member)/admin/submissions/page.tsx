@@ -32,12 +32,12 @@ export default async function AdminSubmissionsPage(
     supabase.from("teams").select("*, submissions(*)").order("code"),
     supabase
       .from("event_settings")
-      .select("submission_deadline, submissions_open")
+      .select("submission_deadline, submissions_open, judging_open")
       .maybeSingle(),
   ]);
 
   const teams = (teamRows ?? []) as TeamWithSubmission[];
-  const settings = settingsRow as EventSettings | null;
+  const settings = settingsRow as (EventSettings & { judging_open: boolean }) | null;
 
   const rows = teams.map((team) => ({ team, submission: firstSubmission(team) }));
 
@@ -70,6 +70,7 @@ export default async function AdminSubmissionsPage(
           <WindowControl
             deadline={settings.submission_deadline}
             open={settings.submissions_open}
+            judgingOpen={settings.judging_open}
           />
         </div>
       )}

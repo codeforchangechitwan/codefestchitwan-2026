@@ -35,6 +35,10 @@ yarn-error.log*
 # ...but the template carries no secrets and every contributor needs it.
 !.env.example
 
+# Plaintext account passwords written by scripts/import-registrations.mjs.
+# Real people's credentials — distribute, then delete. Never commit.
+*credentials*.csv
+
 # vercel
 .vercel
 

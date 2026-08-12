@@ -5,6 +5,7 @@ import {
   FolderGit2,
   Gamepad2,
   QrCode,
+  ContactRound,
   ScanLine,
   Shield,
   Shuffle,
@@ -148,6 +149,12 @@ export default async function AdminPage() {
           icon={ScanLine}
           title="Attendance"
           body="Every scan, manual check-in, CSV export"
+        />
+        <AdminLink
+          href="/admin/roster"
+          icon={ContactRound}
+          title="Roster"
+          body="Look anyone up — desk staff can use this too"
         />
         <AdminLink
           href="/admin/teams"

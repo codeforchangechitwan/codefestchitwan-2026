@@ -20,6 +20,7 @@ const PROTECTED_PREFIXES = [
   "/profile",
   "/verify",
   "/admin",
+  "/judge",
   "/team",
   "/submit",
   "/pitch",

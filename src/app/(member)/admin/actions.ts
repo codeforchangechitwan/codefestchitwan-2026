@@ -276,3 +276,40 @@ export async function setSubmissionWindow(
     message: open ? "Submission window updated." : "Submissions closed.",
   };
 }
+
+/**
+ * Opens the entry list to the judging panel.
+ *
+ * Separate from the submission window on purpose. Submissions close at the
+ * deadline; judging starts when the panel is actually seated, which on Sunday
+ * is a later moment and occasionally a much later one. Until this is on, a
+ * judge's page is empty because RLS returns them nothing — not because the UI
+ * declines to draw it.
+ */
+export async function setJudgingOpen(
+  open: boolean,
+): Promise<{ ok: boolean; message: string }> {
+  const { profile: actor } = await requireExecutive();
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("event_settings")
+    .update({
+      judging_open: open,
+      updated_at: new Date().toISOString(),
+      updated_by: actor.id,
+    })
+    .eq("id", true);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/admin/submissions");
+  revalidatePath("/judge");
+
+  return {
+    ok: true,
+    message: open
+      ? "Judging is open — the panel can now see every submitted entry."
+      : "Judging closed. Judges can no longer see entries.",
+  };
+}
