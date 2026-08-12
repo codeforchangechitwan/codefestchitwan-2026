@@ -1,11 +1,19 @@
 import type { ScheduleEvent } from "@/lib/types";
 
 /*
- * The same timeline as supabase/migrations/*_seed_schedule.sql.
+ * The timeline as it stands after *_timeline_judges_revision.sql — not the
+ * original *_seed_schedule.sql, which this supersedes.
  *
  * Kept in the bundle so the public schedule page still renders during a
  * database outage, on venue wifi, and before Supabase is configured. The
  * database is the source of truth whenever it answers.
+ *
+ * Which is the trap: this file being right does not make the site right. A
+ * revision that is committed here and merely *written* as a migration leaves
+ * the database serving the old timeline to everyone, and the correct one shows
+ * only when Supabase is unreachable. That happened with the judges' revision.
+ * Change this file and the migration together, then actually push the
+ * migration and confirm the rows moved.
  */
 
 type Seed = Pick<

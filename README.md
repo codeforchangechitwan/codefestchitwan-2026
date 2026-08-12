@@ -129,7 +129,12 @@ npm run build && npm start
   standalone logo files have been supplied, so the partners page is text-only.
   Drop the artwork into `public/brand/partners/` and add a `logo` field if you
   want them rendered.
-- **Schedule**: the database is the source of truth. `src/lib/schedule-fallback.ts` holds the same timeline so the public page still renders if the database is unreachable on venue wifi — update both if the schedule changes.
+- **Schedule**: the database is the source of truth. `src/lib/schedule-fallback.ts` holds the same timeline so the public page still renders if the database is unreachable on venue wifi — update both if the schedule changes, **and push the migration**. A migration that only exists in this repo changes nothing: the judges' revision sat committed but unapplied, so the live site served the old Sunday running order while the bundled fallback had the new one. After `supabase db push`, confirm the rows actually moved:
+
+  ```sql
+  select day, time_label, title, zone
+  from public.schedule_events order by day, sort_order;
+  ```
 - **Icons**: regenerate with `python3 scripts/gen-icons.py`.
 
 ## Licence
