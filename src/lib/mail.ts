@@ -2,7 +2,12 @@ import "server-only";
 
 import nodemailer from "nodemailer";
 import { getSmtpConfig, SITE_URL } from "@/lib/env";
+import { CONTACT_SUBJECTS, type ContactSubject } from "@/lib/contact";
+import { EVENT } from "@/lib/event";
 import { ROLE_LABELS, type Role } from "@/lib/types";
+
+/** Where public contact-form enquiries land. */
+const CONTACT_INBOX = process.env.CONTACT_INBOX ?? EVENT.email;
 
 export type MailResult =
   | { sent: true }
@@ -124,6 +129,75 @@ export async function sendCredentialsEmail(params: {
       from: mailer.from,
       to: params.to,
       subject: "Your Codefest Chitwan 2026 login details",
+      text,
+      html,
+    });
+    return { sent: true };
+  } catch (error) {
+    return {
+      sent: false,
+      reason: error instanceof Error ? error.message : "Unknown SMTP error",
+    };
+  }
+}
+
+/**
+ * Forwards a public contact-form enquiry to the organising team's inbox.
+ *
+ * Reply-To is the enquirer so the team can answer straight from the mail
+ * client; the envelope From stays the configured SMTP identity, because most
+ * providers reject a From they are not authorised to send as.
+ */
+export async function sendContactEmail(params: {
+  fullName: string;
+  email: string;
+  subject: ContactSubject;
+  message: string;
+}): Promise<MailResult> {
+  const mailer = transporter();
+  if (!mailer) {
+    return {
+      sent: false,
+      reason: "SMTP is not configured.",
+    };
+  }
+
+  const subjectLabel = CONTACT_SUBJECTS[params.subject];
+
+  const text = [
+    `New contact form enquiry — ${subjectLabel}`,
+    "",
+    `Name:  ${params.fullName}`,
+    `Email: ${params.email}`,
+    "",
+    params.message,
+  ].join("\n");
+
+  const html = `
+<div style="margin:0;padding:24px;background:#fff8f3;font-family:Arial,Helvetica,sans-serif;color:#2a1a10;">
+  <div style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #ecd9c9;border-radius:16px;overflow:hidden;">
+    <div style="background:#8b4513;padding:20px 24px;">
+      <p style="margin:0;font-size:18px;font-weight:bold;color:#ffffff;">Contact form enquiry</p>
+      <p style="margin:4px 0 0;font-size:13px;color:#f6e3d3;">${escapeHtml(subjectLabel)}</p>
+    </div>
+    <div style="padding:24px;">
+      <p style="margin:0 0 4px;font-size:12px;color:#7a6455;">From</p>
+      <p style="margin:0 0 16px;font-size:15px;font-weight:bold;">
+        ${escapeHtml(params.fullName)}
+        &lt;<a href="mailto:${escapeHtml(params.email)}" style="color:#8b4513;">${escapeHtml(params.email)}</a>&gt;
+      </p>
+      <p style="margin:0 0 4px;font-size:12px;color:#7a6455;">Message</p>
+      <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;">${escapeHtml(params.message)}</p>
+    </div>
+  </div>
+</div>`;
+
+  try {
+    await mailer.client.sendMail({
+      from: mailer.from,
+      to: CONTACT_INBOX,
+      replyTo: `${params.fullName} <${params.email}>`,
+      subject: `[Codefest contact] ${subjectLabel} — ${params.fullName}`,
       text,
       html,
     });
