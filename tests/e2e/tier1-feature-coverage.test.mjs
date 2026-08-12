@@ -3,7 +3,8 @@
  * Validates existence, page exports, structural elements, and UI contracts of:
  * - Public Pages: /, /about, /schedule, /venue, /partners, /contact, /login, /offline
  * - Member Pages: /dashboard, /id-card, /team, /submit, /quiz, /leaderboard, /profile, /announcements, /profile/password
- * - Admin Pages: /admin, /admin/members, /admin/submissions, /admin/quizzes, /admin/announcements, /admin/scan, /admin/wheel
+ * - Admin Pages: /admin, /admin/members, /admin/submissions, /admin/quizzes, /admin/announcements, /admin/scan, /admin/wheel, /admin/attendance, /admin/teams, /admin/teams/[id]
+ * - Executive downloads: /api/admin/submissions, /api/admin/members, /api/admin/attendance, /api/admin/badges
  */
 
 import { checkFile, readFileContent } from "./test-harness.mjs";
@@ -57,6 +58,48 @@ export function runTier1Tests(runner) {
     r.test("Venue (/venue) contains location details for Forbes College", () => {
       const content = readFileContent("src/app/venue/page.tsx");
       r.assertIncludes(content, "Forbes", "Venue page should mention Forbes College");
+    });
+
+    r.test("Partner names corrected by the official announcement have not regressed", () => {
+      const content = readFileContent("src/lib/partners.ts");
+      // Left-hand names were poster mis-readings; the announcement slides
+      // corrected them. Re-introducing one would put a wrong business on a
+      // public sponsor page.
+      for (const [wrong, right] of [
+        ["Kathmandu Cake Shop", "Chitwan Cake House"],
+        ["PA Sports", "DS Sports"],
+        ["Lords Hotels & Resorts", "Lords CBC Plaza"],
+      ]) {
+        r.assert(
+          !content.includes(`name: "${wrong}"`),
+          `partners.ts must not reintroduce "${wrong}" — the announcement says "${right}"`
+        );
+        r.assertIncludes(content, `name: "${right}"`, `partners.ts must list "${right}"`);
+      }
+    });
+
+    r.test("Announced partner tiers are quoted from the official slides", () => {
+      const content = readFileContent("src/lib/partners.ts");
+      for (const tier of [
+        "National Banking Partner",
+        "Venue Partner",
+        "International Supporting Partner",
+        "Hospitality Partner",
+        "Multiplex Partner",
+        "Cake Partner",
+        "Ice Cream Partner",
+        "Sports Partner",
+        "Content Creation Partner",
+        "Internet Partner",
+      ]) {
+        r.assertIncludes(content, tier, `partners.ts must carry the "${tier}" tier`);
+      }
+    });
+
+    r.test("Event dates carry the Bikram Sambat year used on the announcements", () => {
+      const content = readFileContent("src/lib/event.ts");
+      r.assertIncludes(content, "2083 Shrawan", "event.ts must state the BS year 2083");
+      r.assertIncludes(content, "14–16 August 2026", "event.ts must keep the Gregorian dates");
     });
   });
 
@@ -113,6 +156,9 @@ export function runTier1Tests(runner) {
       { path: "src/app/(member)/admin/announcements/page.tsx", route: "/admin/announcements", name: "Broadcast Announcements" },
       { path: "src/app/(member)/admin/scan/page.tsx", route: "/admin/scan", name: "Desk QR Scanner" },
       { path: "src/app/(member)/admin/wheel/page.tsx", route: "/admin/wheel", name: "Lucky Wheel" },
+      { path: "src/app/(member)/admin/attendance/page.tsx", route: "/admin/attendance", name: "Attendance Log" },
+      { path: "src/app/(member)/admin/teams/page.tsx", route: "/admin/teams", name: "Team Directory" },
+      { path: "src/app/(member)/admin/teams/[id]/page.tsx", route: "/admin/teams/[id]", name: "Team Detail" },
     ];
 
     for (const item of adminRoutes) {
@@ -135,6 +181,69 @@ export function runTier1Tests(runner) {
         content.includes("requireDeskStaff") || content.includes("scan") || content.includes("station"),
         "Scan page must implement desk staff check and station options"
       );
+    });
+
+    r.test("Attendance (/admin/attendance) reads the check_ins log and mounts manual check-in", () => {
+      const content = readFileContent("src/app/(member)/admin/attendance/page.tsx");
+      r.assertIncludes(content, "check_ins", "Attendance page must query the check_ins table");
+      r.assertIncludes(content, "ManualCheckIn", "Attendance page must mount the manual check-in panel");
+      r.assertIncludes(content, "/api/admin/attendance", "Attendance page must link its CSV export");
+    });
+
+    r.test("Manual check-in records through the record_scan RPC, not a direct insert", () => {
+      const content = readFileContent("src/app/(member)/admin/attendance/actions.ts");
+      r.assertIncludes(content, "record_scan", "Manual check-in must reuse the record_scan RPC");
+      r.assertIncludes(content, "requireExecutive", "Manual check-in must be executive-guarded");
+    });
+
+    r.test("Teams (/admin/teams) lists teams and mounts the create form", () => {
+      const content = readFileContent("src/app/(member)/admin/teams/page.tsx");
+      r.assertIncludes(content, "TeamForm", "Teams page must mount the team form");
+      r.assertIncludes(content, "teams", "Teams page must query the teams table");
+    });
+
+    r.test("Team detail (/admin/teams/[id]) mounts the roster editor", () => {
+      const content = readFileContent("src/app/(member)/admin/teams/[id]/page.tsx");
+      r.assertIncludes(content, "TeamRoster", "Team detail page must mount the roster editor");
+      r.assertIncludes(content, "team_id", "Team detail page must load members by team_id");
+    });
+  });
+
+  runner.suite("Tier 1: Feature Coverage — Executive Download Routes", (r) => {
+    const exportRoutes = [
+      { path: "src/app/api/admin/submissions/route.ts", route: "/api/admin/submissions", name: "Submissions CSV" },
+      { path: "src/app/api/admin/members/route.ts", route: "/api/admin/members", name: "Roster CSV" },
+      { path: "src/app/api/admin/attendance/route.ts", route: "/api/admin/attendance", name: "Attendance CSV" },
+      { path: "src/app/api/admin/badges/route.ts", route: "/api/admin/badges", name: "Badge QR archive" },
+    ];
+
+    for (const item of exportRoutes) {
+      r.test(`Export Route [${item.route}] source file exists`, () => {
+        r.assert(checkFile(item.path), `File ${item.path} should exist`);
+      });
+
+      r.test(`Export Route [${item.route}] answers with a status code rather than a redirect`, () => {
+        const content = readFileContent(item.path);
+        r.assertIncludes(
+          content,
+          "requireExecutiveApi",
+          `${item.route} must guard in-route so a refused download is not the login page`
+        );
+      });
+    }
+
+    r.test("Roster CSV never exports the card token", () => {
+      const content = readFileContent("src/app/api/admin/members/route.ts");
+      r.assert(
+        !/key:\s*"qr_token"/.test(content),
+        "The roster export must not include qr_token — it is the whole content of a member's card"
+      );
+    });
+
+    r.test("Badge archive encodes the same /verify URL the in-app card shows", () => {
+      const content = readFileContent("src/lib/qr.ts");
+      r.assertIncludes(content, "renderQrPng", "lib/qr must expose a PNG renderer for the print run");
+      r.assertIncludes(content, "qrTargetUrl", "Badge codes must encode the shared /verify target URL");
     });
   });
 }

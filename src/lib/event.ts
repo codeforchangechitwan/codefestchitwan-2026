@@ -3,12 +3,19 @@
 export const EVENT = {
   name: "Codefest 2026 — Chitwan",
   tagline: "Transforming ideas into reality",
+  /** How the organisers bill the event on the announcement material. */
+  positioning: "Nepal's Largest Hackathon",
   organiser: "Code for Change",
   organiserTagline: "Let code lead the change",
   venue: "Forbes College Chitwan",
   address: "Bharatpur-2, Kshetrapur, Chitwan",
   datesEnglish: "14–16 August 2026",
-  datesNepali: "Shrawan 29, 30, 31",
+  /*
+   * The Bikram Sambat year matters: the announcement slides all read
+   * "2083 Shrawan 29,30,31", and locally that is the date people actually
+   * quote. Shrawan without the year is ambiguous across festival seasons.
+   */
+  datesNepali: "2083 Shrawan 29, 30, 31",
   /** Doors open at the registration desk. */
   startsAt: "2026-08-14T07:00:00+05:45",
   endsAt: "2026-08-16T17:00:00+05:45",

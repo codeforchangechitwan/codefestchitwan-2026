@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { ExternalLink, Sparkles } from "lucide-react";
+import { BadgeCheck, ExternalLink, MapPin, Sparkles } from "lucide-react";
 import { partnersByCategory, PARTNERS } from "@/lib/partners";
+import { EVENT } from "@/lib/event";
 
 export const metadata: Metadata = {
   title: "Partners",
@@ -10,11 +11,14 @@ export const metadata: Metadata = {
 };
 
 const TIER_BADGE_STYLES: Record<string, string> = {
+  "National Banking Partner": "border-gold-glow/40 bg-gold-glow/10 text-gold-glow",
   "Venue Partner": "border-gold-glow/40 bg-gold-glow/10 text-gold-glow",
+  "International Supporting Partner":
+    "border-emerald-glow/40 bg-emerald-glow/10 text-emerald-glow",
   "In Association With": "border-accent/40 bg-accent-soft text-accent",
   "College Partner": "border-navy/40 bg-navy-soft/40 text-navy",
-  "Technology Partner": "border-brand/40 bg-brand-soft text-brand",
   "Open Source Partner": "border-emerald-glow/40 bg-emerald-glow/10 text-emerald-glow",
+  "Internet Partner": "border-brand/40 bg-brand-soft text-brand",
 };
 
 export default function PartnersPage() {
@@ -27,7 +31,18 @@ export default function PartnersPage() {
 
       <h1 className="text-3xl font-extrabold tracking-tight">Partners & Sponsors</h1>
       <p className="mt-1 text-xs sm:text-sm text-muted max-w-2xl">
-        {PARTNERS.length} organizations make Codefest 2026 Chitwan possible — powering venue infrastructure, tech tools, fooding, and prize pools.
+        {PARTNERS.length} organisations make Codefest 2026 Chitwan possible — powering
+        venue infrastructure, tech tools, fooding, and prize pools.{" "}
+        {EVENT.datesNepali} ({EVENT.datesEnglish}).
+      </p>
+
+      <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-muted">
+        <BadgeCheck size={13} className="mt-0.5 shrink-0 text-emerald-glow" aria-hidden />
+        <span>
+          Marked names and tiers are quoted from Code for Change&rsquo;s official
+          partner announcements. The rest were transcribed from the poster and are
+          still being confirmed.
+        </span>
       </p>
 
       {/* Categorized Partner Tiers */}
@@ -51,9 +66,9 @@ export default function PartnersPage() {
                 {partners.map((partner) => (
                   <div
                     key={partner.name}
-                    className="glass-card p-4 border-glass hover-rise transition-all duration-300 flex items-center justify-between"
+                    className="glass-card p-4 border-glass hover-rise transition-all duration-300"
                   >
-                    <div>
+                    <div className="flex items-start gap-1.5">
                       {partner.url ? (
                         <a
                           href={partner.url}
@@ -65,9 +80,32 @@ export default function PartnersPage() {
                           <ExternalLink size={12} className="text-muted" />
                         </a>
                       ) : (
-                        <span className="text-sm font-bold text-foreground">{partner.name}</span>
+                        <span className="text-sm font-bold text-foreground">
+                          {partner.name}
+                        </span>
+                      )}
+
+                      {partner.announced && (
+                        <BadgeCheck
+                          size={13}
+                          className="mt-0.5 shrink-0 text-emerald-glow"
+                          aria-label="Confirmed in the official announcement"
+                        />
                       )}
                     </div>
+
+                    {partner.location && (
+                      <p className="mt-1.5 flex items-start gap-1 text-[11px] leading-snug text-muted">
+                        <MapPin size={11} className="mt-0.5 shrink-0" aria-hidden />
+                        {partner.location}
+                      </p>
+                    )}
+
+                    {partner.note && (
+                      <p className="mt-1 text-[11px] italic leading-snug text-muted">
+                        {partner.note}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

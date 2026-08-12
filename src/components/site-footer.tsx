@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Globe, Mail, MapPin, Calendar, Heart } from "lucide-react";
 import { FacebookIcon, InstagramIcon } from "@/components/brand-icons";
+import { EVENT } from "@/lib/event";
 
 const SOCIALS = [
   {
@@ -67,11 +68,15 @@ export function SiteFooter() {
             <div className="space-y-2 text-xs text-muted">
               <div className="flex items-center gap-2">
                 <MapPin size={14} className="text-brand shrink-0" />
-                <span>Forbes College, Bharatpur-2, Kshetrapur, Chitwan</span>
+                <span>
+                  {EVENT.venue}, {EVENT.address}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar size={14} className="text-accent shrink-0" />
-                <span>Shrawan 29–31 (14–16 August 2026)</span>
+                <span>
+                  {EVENT.datesNepali} ({EVENT.datesEnglish})
+                </span>
               </div>
             </div>
           </div>

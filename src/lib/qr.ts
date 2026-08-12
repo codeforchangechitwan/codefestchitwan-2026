@@ -36,3 +36,20 @@ export async function renderQrSvg(
     color: { dark: "#2a1a10", light: "#ffffff" },
   });
 }
+
+/**
+ * The same code as a PNG, for the badge print run.
+ *
+ * SVG is the better format everywhere the app renders a card itself, but the
+ * printer takes a folder of images, and 1000px is large enough that a badge
+ * printed at card size still scans after the toner has spread.
+ */
+export async function renderQrPng(token: string): Promise<Buffer> {
+  return QRCode.toBuffer(qrTargetUrl(token), {
+    type: "png",
+    errorCorrectionLevel: "M",
+    width: 1000,
+    margin: 2,
+    color: { dark: "#2a1a10", light: "#ffffff" },
+  });
+}

@@ -5,27 +5,54 @@ import {
   FolderGit2,
   Gamepad2,
   QrCode,
+  ScanLine,
   Shield,
   Shuffle,
   Timer,
   TriangleAlert,
   UserPlus,
   Users,
+  UsersRound,
 } from "lucide-react";
 import { requireExecutive } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getSmtpConfig } from "@/lib/env";
+import { EVENT_DAYS, kathmanduDayRange } from "@/lib/attendance";
 import { ROLES, ROLE_LABELS } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Admin" };
+
+/**
+ * Today, if today is one of the three event days. Outside them the scan
+ * counter would read zero all day, which looks like a broken scanner rather
+ * than like nothing being on.
+ */
+function currentEventDay() {
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kathmandu",
+  }).format(new Date());
+  return EVENT_DAYS.find((day) => day.date === today) ?? null;
+}
 
 export default async function AdminPage() {
   await requireExecutive();
   const supabase = await createClient();
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("role, checked_in_at, is_active");
+  const eventDay = currentEventDay();
+  const range = eventDay ? kathmanduDayRange(eventDay.date) : null;
+
+  const [{ data: profiles }, { count: teamCount }, { count: scansToday }] =
+    await Promise.all([
+      supabase.from("profiles").select("role, checked_in_at, is_active"),
+      supabase.from("teams").select("id", { count: "exact", head: true }),
+      range
+        ? supabase
+            .from("check_ins")
+            .select("id", { count: "exact", head: true })
+            .gte("created_at", range.start)
+            .lt("created_at", range.end)
+        : Promise.resolve({ count: null }),
+    ]);
 
   const rows = profiles ?? [];
   const total = rows.length;
@@ -61,11 +88,22 @@ export default async function AdminPage() {
         </p>
       )}
 
-      <section className="mt-6 grid grid-cols-3 gap-3">
+      <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Members" value={total} />
         <Stat label="Checked in" value={checkedIn} />
-        <Stat label="Suspended" value={suspended} />
+        <Stat label="Teams" value={teamCount ?? 0} />
+        {eventDay ? (
+          <Stat label="Scans today" value={scansToday ?? 0} />
+        ) : (
+          <Stat label="Suspended" value={suspended} />
+        )}
       </section>
+
+      {eventDay && suspended > 0 && (
+        <p className="mt-3 text-xs text-muted">
+          {suspended} suspended {suspended === 1 ? "account" : "accounts"}.
+        </p>
+      )}
 
       <section className="mt-6">
         <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
@@ -104,6 +142,18 @@ export default async function AdminPage() {
           icon={QrCode}
           title="Scan & check in"
           body="Camera scanner for the registration desk"
+        />
+        <AdminLink
+          href="/admin/attendance"
+          icon={ScanLine}
+          title="Attendance"
+          body="Every scan, manual check-in, CSV export"
+        />
+        <AdminLink
+          href="/admin/teams"
+          icon={UsersRound}
+          title="Teams"
+          body="Rooms, tables and who is on which team"
         />
         <AdminLink
           href="/admin/announcements"

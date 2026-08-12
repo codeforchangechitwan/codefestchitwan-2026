@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/bottom-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { ServiceWorker } from "@/components/service-worker";
+import { InstallPrompt } from "@/components/install-prompt";
 import { getSessionProfile } from "@/lib/supabase/server";
 import { SITE_URL } from "@/lib/env";
 import type { Role } from "@/lib/types";
@@ -104,6 +105,7 @@ export default async function RootLayout({
         </div>
 
         <ServiceWorker />
+        <InstallPrompt />
       </body>
     </html>
   );

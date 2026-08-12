@@ -21,7 +21,12 @@ Mobile-first, installable as a PWA, and closed by design: accounts exist only fo
 - Create accounts and email one-time passwords
 - Resend passwords, rotate a leaked QR, suspend or restore access
 - Camera QR scanner for check-in at the registration desk
+- Attendance log — every scan at every station, filterable by day, station and
+  direction, with manual check-in for a lost card or a camera that won't focus
+- Teams — codes, rooms, table numbers, and who is on which team
 - Publish/hide quizzes, post announcements
+- Exports: roster, attendance and submissions as CSV, and every identity-card
+  QR as a zip for the badge print run
 
 ## Categories
 
@@ -45,7 +50,7 @@ If SMTP isn't configured, the account is still created and the generated passwor
 - Next.js 16 (App Router, Turbopack) · React 19.2 · TypeScript
 - Tailwind CSS v4, themed from the Chitwan poster (brown `#8b4513`, coral `#f2705b`, navy `#001b3a`), light and dark
 - Supabase — Postgres, Auth, Row Level Security
-- `qrcode` for card generation, `@zxing/browser` for scanning, `nodemailer` for credential mail
+- `qrcode` for card generation, `@zxing/browser` for scanning, `nodemailer` for credential mail, `jszip` for the badge print archive
 
 Session refresh and route gating live in `src/proxy.ts` — Next.js 16 renamed Middleware to Proxy.
 
@@ -110,7 +115,20 @@ npm run build && npm start
 
 ## Notes for the organising team
 
-- **Partner names**: `src/lib/partners.ts` was transcribed from the poster. Entries marked `verify: true` were read from small logos — please confirm the spelling and add website URLs.
+- **Partner names**: `src/lib/partners.ts` carries two provenances. Entries marked
+  `announced: true` come from the official partner announcement slides: the tier
+  is quoted from the slide caption, while the trading name and address follow
+  the partner's own logo, which wins wherever a slide disagreed with itself
+  (caption "Chitwan Cake Shop" vs logo "Chitwan Cake House"). Entries still
+  marked `verify: true` were read from small logos on the poster: please confirm
+  the spelling and add website URLs. The announcements already corrected three
+  earlier readings (`Kathmandu Cake Shop` → **Chitwan Cake House**, `PA Sports`
+  → **DS Sports**, `Lords Hotels & Resorts` → **Lords CBC Plaza**), so treat the
+  remaining unverified names with the same suspicion.
+- **Partner logos**: the announcement slides carry each partner's logo, but no
+  standalone logo files have been supplied, so the partners page is text-only.
+  Drop the artwork into `public/brand/partners/` and add a `logo` field if you
+  want them rendered.
 - **Schedule**: the database is the source of truth. `src/lib/schedule-fallback.ts` holds the same timeline so the public page still renders if the database is unreachable on venue wifi — update both if the schedule changes.
 - **Icons**: regenerate with `python3 scripts/gen-icons.py`.
 

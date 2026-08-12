@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { getSessionProfile } from "@/lib/supabase/server";
 import { ADMIN_ROLES, type Profile, type Role } from "@/lib/types";
@@ -34,6 +35,29 @@ export async function requireExecutive() {
     redirect("/dashboard?error=forbidden");
   }
   return session;
+}
+
+/**
+ * Guard for the executives' download routes.
+ *
+ * Answers with a status code instead of redirecting: a download that is
+ * refused must not hand the browser the login page's HTML under a 200, which
+ * is what a redirect would save to disk as the .csv the user asked for.
+ */
+export async function requireExecutiveApi() {
+  const session = await getSessionProfile();
+
+  if (!session) {
+    return { session: null, response: new NextResponse("Sign in first.", { status: 401 }) };
+  }
+  if (session.profile.role !== "executive") {
+    return {
+      session: null,
+      response: new NextResponse("Executives only.", { status: 403 }),
+    };
+  }
+
+  return { session, response: null };
 }
 
 /** Guard for the check-in scanner, which volunteers also operate. */

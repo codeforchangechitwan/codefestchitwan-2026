@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Countdown } from "@/components/countdown";
 import { EVENT } from "@/lib/event";
-import { PARTNERS } from "@/lib/partners";
+import { ANNOUNCED_PARTNERS, PARTNERS } from "@/lib/partners";
 import { ROLES, ROLE_LABELS } from "@/lib/types";
 
 const ROLE_BLURBS: Record<string, string> = {
@@ -89,7 +89,8 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-4 text-base sm:text-lg text-muted/90 leading-relaxed font-normal">
-              {EVENT.tagline}. Three days of high-octane building at {EVENT.venue},{" "}
+              <span className="font-semibold text-foreground">{EVENT.positioning}</span>{" "}
+              — {EVENT.tagline}. Three days of high-octane building at {EVENT.venue},{" "}
               {EVENT.address} — {EVENT.datesNepali} ({EVENT.datesEnglish}).
             </p>
 
@@ -233,8 +234,11 @@ export default function HomePage() {
                 View all partner details →
               </Link>
             </div>
+            {/* The officially announced tiers, rather than the first N of the
+                array — so a reordering cannot quietly promote an unconfirmed
+                name onto the front page. */}
             <ul className="flex flex-wrap gap-2">
-              {PARTNERS.slice(0, 10).map((partner) => (
+              {ANNOUNCED_PARTNERS.map((partner) => (
                 <li
                   key={partner.name}
                   className="rounded-lg border border-glass bg-surface/50 px-3 py-1.5 text-xs font-medium text-muted hover:text-foreground hover:border-white/20 transition-colors"
@@ -243,7 +247,7 @@ export default function HomePage() {
                 </li>
               ))}
               <li className="rounded-lg bg-brand-soft border border-brand/20 px-3 py-1.5 text-xs font-semibold text-brand">
-                +{Math.max(PARTNERS.length - 10, 0)} more
+                +{Math.max(PARTNERS.length - ANNOUNCED_PARTNERS.length, 0)} more
               </li>
             </ul>
           </div>
