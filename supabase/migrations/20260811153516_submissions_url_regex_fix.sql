@@ -1,0 +1,12 @@
+-- ---------------------------------------------------------------------------
+-- Applied against the live project on 11 Aug 2026 to replace stamp_submission,
+-- whose URL regex used {4,500}. Postgres caps regex repetition counts at 255,
+-- so every one of those comparisons raised "invalid repetition count(s)"
+-- rather than validating — which also meant a VALID url was rejected.
+--
+-- The corrected function has been folded into
+-- 20260811153432_submissions.sql, so a fresh replay is already correct at
+-- every step and this migration is intentionally a no-op. It exists only so
+-- the local history matches the versions recorded on the remote.
+-- ---------------------------------------------------------------------------
+select 1;

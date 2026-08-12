@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireMember } from "@/lib/auth";
 
 export type PasswordState = { error: string | null; success?: boolean };
@@ -39,8 +40,11 @@ export async function changePassword(
     };
   }
 
-  // Clear the flag so the guard stops redirecting here.
-  await supabase
+  // Clear the flag so the guard stops redirecting here. This uses the service
+  // role because must_change_password is a protected column: the profile guard
+  // trigger refuses self-writes to it, so a member cannot skip the forced
+  // change by PATCHing the flag straight at PostgREST.
+  await createAdminClient()
     .from("profiles")
     .update({ must_change_password: false })
     .eq("id", profile.id);

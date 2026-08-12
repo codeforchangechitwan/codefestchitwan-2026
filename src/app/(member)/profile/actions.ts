@@ -15,22 +15,22 @@ export async function updateProfile(
   const fullName = String(formData.get("full_name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const institution = String(formData.get("institution") ?? "").trim();
-  const teamName = String(formData.get("team_name") ?? "").trim();
 
   if (fullName.length < 2) {
     return { error: "Please enter your full name." };
   }
 
   const supabase = await createClient();
-  // Role, email, room and QR token are intentionally not writable here — the
-  // database trigger rejects those changes for non-executives anyway.
+  // Role, email, room, QR token and team are intentionally not writable here —
+  // the database trigger rejects those changes for non-executives anyway. Team
+  // membership in particular comes from the imported roster, not from free
+  // text, so that teammates actually resolve to the same team.
   const { error } = await supabase
     .from("profiles")
     .update({
       full_name: fullName,
       phone: phone || null,
       institution: institution || null,
-      team_name: teamName || null,
     })
     .eq("id", profile.id);
 

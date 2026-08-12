@@ -9,6 +9,7 @@ import {
   QrCode,
   Shield,
   Trophy,
+  Users,
 } from "lucide-react";
 import { requireMember } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -150,6 +151,14 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
             title="Full schedule"
             body="All three days, by zone"
           />
+          {profile.team_id && (
+            <QuickLink
+              href="/team"
+              icon={Users}
+              title="My team"
+              body="Roster, room and submission"
+            />
+          )}
           <QuickLink
             href="/quiz"
             icon={Gamepad2}

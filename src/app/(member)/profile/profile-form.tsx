@@ -73,18 +73,6 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         />
       </div>
 
-      <div className="grid gap-1.5">
-        <label htmlFor="team_name" className="text-sm font-medium">
-          Team name
-        </label>
-        <input
-          id="team_name"
-          name="team_name"
-          defaultValue={profile.team_name ?? ""}
-          className={FIELD_CLASS}
-        />
-      </div>
-
       {state.error && (
         <p
           role="alert"

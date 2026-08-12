@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Bell,
+  FolderGit2,
   Gamepad2,
   QrCode,
   Shield,
+  Shuffle,
   TriangleAlert,
   UserPlus,
   Users,
@@ -113,6 +115,18 @@ export default async function AdminPage() {
           icon={Gamepad2}
           title="Quizzes"
           body="Publish or hide quizzes and games"
+        />
+        <AdminLink
+          href="/admin/wheel?mode=tables"
+          icon={Shuffle}
+          title="The draw"
+          body="Table numbers and Sunday's pitch order"
+        />
+        <AdminLink
+          href="/admin/submissions"
+          icon={FolderGit2}
+          title="Submissions"
+          body="Who has submitted, deadline control, CSV export"
         />
       </section>
     </div>

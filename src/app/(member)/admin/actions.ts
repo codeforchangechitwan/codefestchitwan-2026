@@ -238,3 +238,41 @@ export async function setQuizPublished(quizId: string, published: boolean) {
     ? { ok: false, message: error.message }
     : { ok: true, message: published ? "Quiz published." : "Quiz hidden." };
 }
+
+/**
+ * The event-day lever for "the wifi died, give them ten more minutes". RLS
+ * reads these two values on every submission write, so closing the window here
+ * genuinely stops writes rather than only hiding the form.
+ */
+export async function setSubmissionWindow(
+  deadlineIso: string,
+  open: boolean,
+): Promise<{ ok: boolean; message: string }> {
+  const { profile: actor } = await requireExecutive();
+
+  const deadline = new Date(deadlineIso);
+  if (Number.isNaN(deadline.getTime())) {
+    return { ok: false, message: "That deadline isn't a valid date and time." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("event_settings")
+    .update({
+      submission_deadline: deadline.toISOString(),
+      submissions_open: open,
+      updated_at: new Date().toISOString(),
+      updated_by: actor.id,
+    })
+    .eq("id", true);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/admin/submissions");
+  revalidatePath("/submit");
+
+  return {
+    ok: true,
+    message: open ? "Submission window updated." : "Submissions closed.",
+  };
+}

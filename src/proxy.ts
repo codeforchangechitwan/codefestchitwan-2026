@@ -20,6 +20,8 @@ const PROTECTED_PREFIXES = [
   "/profile",
   "/verify",
   "/admin",
+  "/team",
+  "/submit",
 ];
 
 export async function proxy(request: NextRequest) {
