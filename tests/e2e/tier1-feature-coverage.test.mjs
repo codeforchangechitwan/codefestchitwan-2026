@@ -280,6 +280,28 @@ export function runTier1Tests(runner) {
       );
     });
 
+    r.test("A plain re-run cannot wipe the passwords out of the credentials file", () => {
+      const script = readFileContent("scripts/import-registrations.mjs");
+      r.assertIncludes(
+        script,
+        "existingPasswords",
+        "The export must carry forward passwords from a previous run"
+      );
+      r.assert(
+        /if \(!record\.password && carried\.has\(record\.email\)\)/.test(script),
+        "A blank password must be refilled from the prior file, not written out empty"
+      );
+    });
+
+    r.test("Site origin falls back to the deployment, never silently to localhost", () => {
+      const env = readFileContent("src/lib/env.ts");
+      r.assertIncludes(
+        env,
+        "VERCEL_PROJECT_PRODUCTION_URL",
+        "An unset NEXT_PUBLIC_SITE_URL must degrade to the deployment origin"
+      );
+    });
+
     r.test("Badge links are withheld when the site origin is localhost", () => {
       const script = readFileContent("scripts/import-registrations.mjs");
       r.assertIncludes(script, "cardUrlsUsable", "A localhost card_url must not be written");

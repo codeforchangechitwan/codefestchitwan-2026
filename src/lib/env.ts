@@ -11,8 +11,25 @@ export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 export const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+/*
+ * The public origin. Identity-card QRs encode it, so a wrong value here is
+ * printed onto paper badges that resolve nowhere.
+ *
+ * The localhost fallback exists so `npm run dev` works before .env.local is
+ * filled in — but it shipped to production once already, where og:image and
+ * every generated card pointed at http://localhost:3000. Falling back
+ * silently in a production build is therefore treated as the bug it is:
+ * VERCEL_PROJECT_PRODUCTION_URL is injected by Vercel on every deployment, so
+ * an unset variable degrades to the deployment's own origin instead of to a
+ * laptop.
+ */
+const FALLBACK_ORIGIN = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_ORIGIN
+).replace(/\/+$/, "");
 
 export function requirePublicSupabase() {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {

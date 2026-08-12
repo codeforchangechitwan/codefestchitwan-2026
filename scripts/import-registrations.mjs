@@ -478,7 +478,7 @@ async function upsertAccount(person, existingUsers, teamId = null, teamName = nu
     .from("profiles")
     .update(patch)
     .eq("id", userId)
-    .select("qr_token")
+    .select("qr_token, full_name")
     .single();
 
   if (profileError) {
@@ -491,6 +491,15 @@ async function upsertAccount(person, existingUsers, teamId = null, teamName = nu
   if (updated?.qr_token && cardUrlsUsable) {
     record.card_url = `${siteUrl}/verify/${updated.qr_token}`;
   }
+
+  /*
+   * Report the name the database actually holds, not the one parsed out of the
+   * spreadsheet. For an executive the sheet supplies no name at all, so the
+   * parsed value is the email local part — printing that on the handout sheet
+   * would contradict the badge, which carries whatever a human has since
+   * corrected the profile to.
+   */
+  if (updated?.full_name) record.full_name = updated.full_name;
 
   results.push(record);
 }
@@ -589,6 +598,64 @@ for (const person of [...executives, ...volunteers, ...panel]) {
 // ---------------------------------------------------------------------------
 
 const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+/*
+ * Carry forward passwords from a previous run.
+ *
+ * Without this, a plain re-run — to fill in card_url, or to add one corrected
+ * participant — rewrites the file with an empty password column, because an
+ * existing account is deliberately not given a new password. The plaintext
+ * exists nowhere else: Supabase stores only a hash. That mistake destroys the
+ * distribution list and the only way back is resetting a hundred passwords.
+ */
+function existingPasswords(path) {
+  const byEmail = new Map();
+  let text;
+  try {
+    text = readFileSync(path, "utf8");
+  } catch {
+    return byEmail;
+  }
+
+  const rows = parseCsv(text.replace(/^﻿/, ""));
+  if (rows.length < 2) return byEmail;
+
+  const header = rows[0].map((h) => h.trim());
+  const emailAt = header.indexOf("email");
+  const passwordAt = header.indexOf("password");
+  if (emailAt === -1 || passwordAt === -1) return byEmail;
+
+  for (const row of rows.slice(1)) {
+    const email = (row[emailAt] ?? "").trim().toLowerCase();
+    const password = (row[passwordAt] ?? "").trim();
+    if (email && password) byEmail.set(email, password);
+  }
+  return byEmail;
+}
+
+if (!dryRun) {
+  const carried = existingPasswords(outPath);
+  let filled = 0;
+  for (const record of results) {
+    if (!record.password && carried.has(record.email)) {
+      record.password = carried.get(record.email);
+      filled += 1;
+    }
+  }
+  if (filled > 0) {
+    console.log(`\nCarried ${filled} existing password${filled === 1 ? "" : "s"} forward from ${outPath}.`);
+  }
+
+  const blank = results.filter((r) => !r.password);
+  if (blank.length > 0) {
+    console.log(
+      `\n  !! ${blank.length} row${blank.length === 1 ? " has" : "s have"} no password.\n` +
+        "     Those accounts existed before this run and their plaintext is not\n" +
+        "     recoverable — Supabase stores only a hash. If you need to hand them\n" +
+        "     out, re-run with --reset-passwords to issue new ones.",
+    );
+  }
+}
 const header = [
   "full_name", "email", "role", "title", "team", "password", "card_url", "status",
 ];
