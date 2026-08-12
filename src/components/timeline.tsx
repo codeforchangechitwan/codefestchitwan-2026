@@ -1,14 +1,6 @@
 import { MapPin, Sparkles } from "lucide-react";
 import type { ScheduleEvent } from "@/lib/types";
-import { groupByDay } from "@/lib/schedule-utils";
-
-const KEY_SESSIONS = new Set([
-  "Registration Starts",
-  "Opening Ceremony",
-  "Quiz & Refreshments",
-  "Presentations",
-  "Closing Ceremony",
-]);
+import { groupByDay, isKeySession } from "@/lib/schedule-utils";
 
 export function Timeline({
   events,
@@ -44,7 +36,7 @@ export function Timeline({
                 ends !== null &&
                 now >= starts &&
                 now < ends;
-              const isKey = KEY_SESSIONS.has(event.title);
+              const isKey = isKeySession(event.title);
 
               return (
                 <li key={event.id} className="relative group">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import type { ScheduleEvent } from "@/lib/types";
+import { isKeySession } from "@/lib/schedule-utils";
 import { Timeline } from "@/components/timeline";
 
 export function ScheduleView({ events, nowIso }: { events: ScheduleEvent[]; nowIso: string }) {
@@ -14,10 +15,7 @@ export function ScheduleView({ events, nowIso }: { events: ScheduleEvent[]; nowI
     if (activeTab === "day-1" && evt.day !== "1") return false;
     if (activeTab === "day-2" && evt.day !== "2") return false;
     if (activeTab === "day-3" && evt.day !== "3") return false;
-    if (activeTab === "key") {
-      const keySet = new Set(["Registration Starts", "Opening Ceremony", "Quiz & Refreshments", "Presentations", "Closing Ceremony"]);
-      if (!keySet.has(evt.title)) return false;
-    }
+    if (activeTab === "key" && !isKeySession(evt.title)) return false;
 
     // Filter by search query
     if (searchQuery.trim()) {

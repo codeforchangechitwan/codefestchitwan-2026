@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { MapPin, Navigation, Bus, Car, Plane } from "lucide-react";
+import { Armchair, Bus, Car, MapPin, Navigation, Plane, Wifi } from "lucide-react";
 import { BUILDINGS, EVENT } from "@/lib/event";
 
 export const metadata: Metadata = {
@@ -115,6 +115,33 @@ export default function VenuePage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* On-site essentials */}
+      <section className="mt-8">
+        <h2 className="text-lg font-bold mb-4">On The Day</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="glass-card p-4 border-glass">
+            <Wifi size={20} className="text-brand mb-2" />
+            <h3 className="font-bold text-xs text-foreground uppercase tracking-wider">Wi-Fi</h3>
+            <p className="text-xs text-muted mt-1 leading-relaxed">
+              Connect to{" "}
+              <span className="font-mono font-semibold text-foreground">{EVENT.wifiSsid}</span>. The
+              password is handed out at the Registration Desk in Building A — it is not published
+              here.
+            </p>
+          </div>
+          <div className="glass-card p-4 border-glass">
+            <Armchair size={20} className="text-brand mb-2" />
+            <h3 className="font-bold text-xs text-foreground uppercase tracking-wider">
+              Judges&rsquo; Seating
+            </h3>
+            <p className="text-xs text-muted mt-1 leading-relaxed">
+              Reserved table at the front of the Main Hall, Building C, with signage in place.
+              Judges are asked to arrive by 9:00 AM on Sunday for the briefing.
+            </p>
+          </div>
         </div>
       </section>
 
