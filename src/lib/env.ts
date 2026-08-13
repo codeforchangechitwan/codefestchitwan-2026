@@ -15,23 +15,25 @@ export const SUPABASE_ANON_KEY =
  * The public origin. Identity-card QRs encode it, so a wrong value here gets
  * printed onto paper badges that resolve nowhere.
  *
- * NEXT_PUBLIC_SITE_URL still wins, and setting it in the hosting environment
- * remains the right thing to do. What changed is what happens when nobody
- * does. This shipped to production twice:
+ * NEXT_PUBLIC_SITE_URL wins over everything below, by design.
  *
- *   1. with no fallback logic at all, so og:image and every card generated
- *      server-side pointed at http://localhost:3000;
- *   2. with a VERCEL_PROJECT_PRODUCTION_URL fallback, which turned out to be
- *      inert — that system variable only exists when a project has
- *      "Automatically expose System Environment Variables" enabled, and this
- *      one does not. The bug survived the fix.
+ * READ THIS BEFORE CHANGING THE FALLBACK AGAIN. Production served
+ * og:url = http://localhost:3000 for a long time and two fallback rewrites
+ * failed to fix it, because the fallback was never what was broken: the
+ * Vercel project has NEXT_PUBLIC_SITE_URL *set*, to http://localhost:3000.
+ * An explicit value beat both attempts, exactly as it should.
  *
- * So the production default is now the origin itself rather than anything
- * inferred at runtime. Hardcoding a domain in source is not elegant, but the
- * alternative has twice been a live site advertising a laptop, and the failure
- * is invisible until somebody scans a printed badge at the registration desk.
- * NODE_ENV is set to "production" by `next build` unconditionally, with no
- * project setting to forget.
+ * The evidence, so nobody re-diagnoses it from scratch: a production build of
+ * this file with the variable unset emits the correct origin, and the
+ * deployment carrying that build still emitted localhost. Only an explicit
+ * environment value explains both. Fix it in the Vercel project settings —
+ * either correct it or delete it, since deleting it now lands here.
+ *
+ * The default below is still worth having for the genuinely-unset case: a
+ * hardcoded domain in source is inelegant, but the alternative was a live site
+ * advertising a laptop, and the failure is invisible until somebody scans a
+ * printed badge at the registration desk. NODE_ENV is set by `next build`
+ * unconditionally, so this needs no project setting to work.
  */
 const PRODUCTION_ORIGIN = "https://codefestchitwan-2026.vercel.app";
 
