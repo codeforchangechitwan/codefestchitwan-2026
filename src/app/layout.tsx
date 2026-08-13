@@ -74,7 +74,7 @@ export default async function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className="relative min-h-full flex flex-col font-sans bg-background text-foreground overflow-x-hidden selection:bg-brand/30 selection:text-brand">
+      <body className="relative min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-brand/30 selection:text-brand">
         {/* Ambient Background Radial Glows */}
         <div
           aria-hidden="true"
@@ -97,7 +97,7 @@ export default async function RootLayout({
             role={role}
             name={session?.profile?.full_name ?? null}
           />
-          <main className="flex-1 pb-20 md:pb-0 w-full relative">
+          <main className="flex-1 pb-20 md:pb-0 w-full relative overflow-x-hidden">
             {children}
           </main>
           <SiteFooter />
