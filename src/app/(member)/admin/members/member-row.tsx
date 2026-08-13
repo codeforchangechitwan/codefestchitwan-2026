@@ -50,7 +50,15 @@ export function MemberRow({ member }: { member: Profile }) {
               </span>
             )}
           </span>
-          <span className="block truncate text-xs text-muted">{member.email}</span>
+          <span className="block truncate text-xs text-muted">
+            {member.participant_code && (
+              <span className="font-mono text-brand">
+                {member.participant_code}
+                {" · "}
+              </span>
+            )}
+            {member.email}
+          </span>
         </span>
         <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-semibold text-brand">
           {ROLE_LABELS[member.role]}

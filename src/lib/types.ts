@@ -132,6 +132,8 @@ export type Team = {
 export type TeamMember = {
   profile_id: string;
   full_name: string;
+  /** "CFC-07-3". Null for staff, who belong to no team. */
+  participant_code: string | null;
   role: Role;
   institution: string | null;
   room: string | null;
@@ -143,6 +145,11 @@ export type Profile = {
   id: string;
   email: string;
   full_name: string;
+  /**
+   * Human-readable per-person ID, "CFC-07-3" — team code plus seat, seat 1
+   * being the team leader. Null for staff, who belong to no team.
+   */
+  participant_code: string | null;
   role: Role;
   /** Executive portfolio ("Tech Lead") or a judge's affiliation. Display only. */
   title: string | null;
@@ -198,6 +205,8 @@ export type EventSettings = {
 export type DirectoryEntry = {
   profile_id: string;
   full_name: string;
+  /** "CFC-07-3". Null for staff. Also matched by the directory's search. */
+  participant_code: string | null;
   email: string;
   role: Role;
   title: string | null;

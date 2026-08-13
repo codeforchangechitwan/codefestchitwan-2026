@@ -42,7 +42,9 @@ export default async function MembersPage(props: PageProps<"/admin/members">) {
   if (query) {
     const escaped = query.replace(/[(),*]/g, " ").trim();
     if (escaped) {
-      request = request.or(`full_name.ilike.%${escaped}%,email.ilike.%${escaped}%`);
+      request = request.or(
+        `full_name.ilike.%${escaped}%,email.ilike.%${escaped}%,participant_code.ilike.%${escaped}%`,
+      );
     }
   }
 
@@ -86,7 +88,7 @@ export default async function MembersPage(props: PageProps<"/admin/members">) {
           type="search"
           name="q"
           defaultValue={query}
-          placeholder="Search name or email"
+          placeholder="Search name, email or ID"
           className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm outline-none focus:border-brand"
         />
         <select

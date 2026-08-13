@@ -117,6 +117,12 @@ export default async function TeamPage() {
                   )}
                 </span>
                 <span className="block truncate text-xs text-muted">
+                  {member.participant_code && (
+                    <span className="font-mono text-brand">
+                      {member.participant_code}
+                      {" · "}
+                    </span>
+                  )}
                   {ROLE_LABELS[member.role]}
                   {member.institution ? ` · ${member.institution}` : ""}
                 </span>

@@ -51,6 +51,16 @@ export default async function IdCardPage() {
           <p className="mt-0.5 text-sm text-muted">{ROLE_LABELS[profile.role]}</p>
 
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            {profile.participant_code && (
+              <div className="col-span-2">
+                <dt className="text-[11px] uppercase tracking-wide text-muted">
+                  Participant ID
+                </dt>
+                <dd className="font-mono text-lg font-bold tracking-wide text-brand">
+                  {profile.participant_code}
+                </dd>
+              </div>
+            )}
             {profile.team_name && (
               <div className="col-span-2">
                 <dt className="text-[11px] uppercase tracking-wide text-muted">
