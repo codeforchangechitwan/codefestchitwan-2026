@@ -293,12 +293,20 @@ export function runTier1Tests(runner) {
       );
     });
 
-    r.test("Site origin falls back to the deployment, never silently to localhost", () => {
+    r.test("A production build never falls back to localhost", () => {
       const env = readFileContent("src/lib/env.ts");
-      r.assertIncludes(
-        env,
-        "VERCEL_PROJECT_PRODUCTION_URL",
-        "An unset NEXT_PUBLIC_SITE_URL must degrade to the deployment origin"
+      // The fallback must not depend on a Vercel system variable: the previous
+      // attempt used VERCEL_PROJECT_PRODUCTION_URL, which only exists when the
+      // project exposes system env vars, and this one does not — the bug
+      // survived the fix and shipped again.
+      r.assertIncludes(env, "PRODUCTION_ORIGIN", "A production origin constant must exist");
+      r.assert(
+        /NODE_ENV === "production"\s*\?\s*PRODUCTION_ORIGIN/.test(env),
+        "A production build must default to the real origin, not localhost"
+      );
+      r.assert(
+        /NEXT_PUBLIC_SITE_URL \|\| FALLBACK_ORIGIN/.test(env),
+        "An explicit NEXT_PUBLIC_SITE_URL must still win over the default"
       );
     });
 

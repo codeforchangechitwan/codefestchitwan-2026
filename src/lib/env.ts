@@ -12,20 +12,31 @@ export const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 /*
- * The public origin. Identity-card QRs encode it, so a wrong value here is
+ * The public origin. Identity-card QRs encode it, so a wrong value here gets
  * printed onto paper badges that resolve nowhere.
  *
- * The localhost fallback exists so `npm run dev` works before .env.local is
- * filled in — but it shipped to production once already, where og:image and
- * every generated card pointed at http://localhost:3000. Falling back
- * silently in a production build is therefore treated as the bug it is:
- * VERCEL_PROJECT_PRODUCTION_URL is injected by Vercel on every deployment, so
- * an unset variable degrades to the deployment's own origin instead of to a
- * laptop.
+ * NEXT_PUBLIC_SITE_URL still wins, and setting it in the hosting environment
+ * remains the right thing to do. What changed is what happens when nobody
+ * does. This shipped to production twice:
+ *
+ *   1. with no fallback logic at all, so og:image and every card generated
+ *      server-side pointed at http://localhost:3000;
+ *   2. with a VERCEL_PROJECT_PRODUCTION_URL fallback, which turned out to be
+ *      inert — that system variable only exists when a project has
+ *      "Automatically expose System Environment Variables" enabled, and this
+ *      one does not. The bug survived the fix.
+ *
+ * So the production default is now the origin itself rather than anything
+ * inferred at runtime. Hardcoding a domain in source is not elegant, but the
+ * alternative has twice been a live site advertising a laptop, and the failure
+ * is invisible until somebody scans a printed badge at the registration desk.
+ * NODE_ENV is set to "production" by `next build` unconditionally, with no
+ * project setting to forget.
  */
-const FALLBACK_ORIGIN = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : "http://localhost:3000";
+const PRODUCTION_ORIGIN = "https://codefestchitwan-2026.vercel.app";
+
+const FALLBACK_ORIGIN =
+  process.env.NODE_ENV === "production" ? PRODUCTION_ORIGIN : "http://localhost:3000";
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_ORIGIN
