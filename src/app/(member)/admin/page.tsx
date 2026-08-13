@@ -4,6 +4,7 @@ import {
   Bell,
   FolderGit2,
   Gamepad2,
+  GitFork,
   QrCode,
   ContactRound,
   ScanLine,
@@ -191,6 +192,12 @@ export default async function AdminPage() {
           icon={FolderGit2}
           title="Submissions"
           body="Who has submitted, deadline control, CSV export"
+        />
+        <AdminLink
+          href="/admin/github"
+          icon={GitFork}
+          title="GitHub profiles"
+          body="Handles by team, and who has not posted one"
         />
       </section>
     </div>

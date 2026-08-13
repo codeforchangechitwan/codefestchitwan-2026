@@ -73,6 +73,25 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         />
       </div>
 
+      <div className="grid gap-1.5">
+        <label htmlFor="github_username" className="text-sm font-medium">
+          GitHub profile
+        </label>
+        <input
+          id="github_username"
+          name="github_username"
+          defaultValue={profile.github_username ?? ""}
+          autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          placeholder="your-username"
+          className={FIELD_CLASS}
+        />
+        <p className="text-xs leading-relaxed text-muted">
+          Paste your profile link or just the username. Leave it empty to remove it.
+        </p>
+      </div>
+
       {state.error && (
         <p
           role="alert"

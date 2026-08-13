@@ -161,6 +161,11 @@ export type Profile = {
    * volunteers never receive it.
    */
   medical_note: string | null;
+  /**
+   * GitHub handle only, never a URL — src/lib/github.ts reduces a pasted
+   * profile link to this. Set by the participant themselves.
+   */
+  github_username: string | null;
   team_id: string | null;
   /** Denormalised cache of teams.name, kept in sync by a database trigger. */
   team_name: string | null;
