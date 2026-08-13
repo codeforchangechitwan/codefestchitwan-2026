@@ -30,6 +30,26 @@ export function runTier3Tests(runner) {
       r.assertIncludes(footerContent, "href: \"/venue\"", "Footer links to venue page");
     });
 
+    r.test("Schedule day tabs filter on the real day value, not an invented index", () => {
+      const raw = readFileContent("src/components/schedule-view.tsx");
+      // Comments are stripped first: the fix documents the old broken
+      // expression verbatim, and matching that would fail on the explanation
+      // rather than on the code.
+      const view = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+
+      // `day` holds a date ("2026-08-14"). Comparing it to a 1-based index
+      // matched nothing, so Day 1, Day 2 and Day 3 all rendered empty.
+      r.assert(
+        !/evt\.day !== "[123]"/.test(view),
+        "Day tabs must not compare schedule_events.day against a 1-based index"
+      );
+      r.assertIncludes(
+        view,
+        "evt.day !== activeTab",
+        "Day tabs must filter on the actual day value"
+      );
+    });
+
     r.test("Member Navigation Links match across SiteHeader and BottomNav", () => {
       const headerContent = readFileContent("src/components/site-header.tsx");
       const bottomNavContent = readFileContent("src/components/bottom-nav.tsx");
