@@ -50,6 +50,12 @@ yarn-error.log*
 # that branch is not checked out — one `git add -A` away from being published.
 /credential-slips/
 
+# The participant ID list written by scripts/make-participant-id-list.mjs.
+# It carries no credentials — that is the whole point of it — but it is still a
+# roster of 77 named students with their college and their team, and this repo
+# is public. Regenerate it from the database instead of committing it.
+/codefest-2026-participant-ids.pdf
+
 # vercel
 .vercel
 
