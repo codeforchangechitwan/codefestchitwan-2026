@@ -61,7 +61,7 @@ export default async function RosterPage(props: PageProps<"/admin/roster">) {
             type="search"
             name="q"
             defaultValue={query}
-            placeholder="Search name, email or team"
+            placeholder="Search name, email, team or ID"
             className="w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-3 text-sm outline-none focus:border-brand"
           />
         </div>
@@ -116,6 +116,12 @@ export default async function RosterPage(props: PageProps<"/admin/roster">) {
                 </span>
 
                 <span className="block truncate text-xs text-muted">
+                  {person.participant_code && (
+                    <span className="font-mono text-brand">
+                      {person.participant_code}
+                      {" · "}
+                    </span>
+                  )}
                   {[
                     person.title ?? ROLE_LABELS[person.role],
                     person.team_name,

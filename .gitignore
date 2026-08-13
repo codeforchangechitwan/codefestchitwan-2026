@@ -39,11 +39,22 @@ yarn-error.log*
 # Real people's credentials — distribute, then delete. Never commit.
 *credentials*.csv
 
+# The cleaned registration sheet written by scripts/prepare-registrations-csv.mjs.
+# No passwords, but it is the raw form intake: phone numbers, food allergies and
+# the free-text medical notes people were asked to disclose. Not ours to publish.
+*registrations*.csv
+
 # The same credentials as printable per-member slips. Each PDF carries a live
 # password and a scannable entry QR. Ignored here as well as on the branch that
 # generates them, because the directory already exists in working copies where
 # that branch is not checked out — one `git add -A` away from being published.
 /credential-slips/
+
+# The participant ID list written by scripts/make-participant-id-list.mjs.
+# It carries no credentials — that is the whole point of it — but it is still a
+# roster of 77 named students with their college and their team, and this repo
+# is public. Regenerate it from the database instead of committing it.
+/codefest-2026-participant-ids.pdf
 
 # vercel
 .vercel
