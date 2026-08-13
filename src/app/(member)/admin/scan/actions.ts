@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireDeskStaff } from "@/lib/auth";
 import { parseQrPayload } from "@/lib/qr";
-import type { Role, ScanDirection, Station } from "@/lib/types";
+import type { Meal, Role, ScanDirection, Station } from "@/lib/types";
 
 export type ScanLookup =
   | {
@@ -32,6 +32,10 @@ export type ScanRecord =
       /** Echoed back by the database, never the client's toggle. */
       station: string;
       direction: string;
+      /** Null unless the scan was a canteen sitting. */
+      meal: string | null;
+      /** Times this card was already presented for this meal today, before now. */
+      mealRepeat: number;
       scannedAt: string;
       scanCount: number;
       previousDirection: string | null;
@@ -50,6 +54,7 @@ export async function recordScan(
   payload: string,
   station: Station,
   direction: ScanDirection,
+  meal?: Meal,
 ): Promise<ScanRecord> {
   await requireDeskStaff();
 
@@ -63,6 +68,9 @@ export async function recordScan(
     token,
     station,
     direction,
+    // Sent always; record_scan discards it unless the station is the canteen,
+    // so the rule lives in one place rather than in every caller.
+    meal: meal ?? null,
   });
   const row = Array.isArray(data) ? data[0] : null;
 
@@ -84,6 +92,8 @@ export async function recordScan(
     firstTime: row.first_time,
     station: row.station_recorded,
     direction: row.direction_recorded,
+    meal: row.meal_recorded ?? null,
+    mealRepeat: row.meal_repeat ?? 0,
     scannedAt: row.scanned_at,
     scanCount: row.scan_count,
     previousDirection: row.previous_direction,

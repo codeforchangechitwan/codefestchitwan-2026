@@ -19,13 +19,17 @@ import {
 import { BrowserQRCodeReader, type IScannerControls } from "@zxing/browser";
 import {
   DIRECTION_LABELS,
+  isMeal,
   isScanDirection,
   isStation,
+  MEAL_LABELS,
+  MEALS,
   ROLE_COLORS,
   ROLE_LABELS,
   SCAN_DIRECTIONS,
   STATION_LABELS,
   STATIONS,
+  type Meal,
   type ScanDirection,
   type Station,
 } from "@/lib/types";
@@ -35,6 +39,7 @@ type Status = "idle" | "starting" | "scanning" | "denied" | "unsupported";
 
 const STATION_KEY = "cf-scan-station";
 const DIRECTION_KEY = "cf-scan-direction";
+const MEAL_KEY = "cf-scan-meal";
 
 /** Ignore the SAME card re-decoded inside this window. Frame noise, not policy. */
 const REPEAT_WINDOW_MS = 3000;
@@ -84,9 +89,11 @@ function timeOfDay(iso: string) {
 export function Scanner({
   initialStation,
   initialDirection,
+  initialMeal,
 }: {
   initialStation: Station;
   initialDirection: ScanDirection;
+  initialMeal: Meal;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
@@ -101,6 +108,7 @@ export function Scanner({
   // An explicit tap wins over the saved posting for the rest of the session.
   const [stationChoice, setStationChoice] = useState<Station | null>(null);
   const [directionChoice, setDirectionChoice] = useState<ScanDirection | null>(null);
+  const [mealChoice, setMealChoice] = useState<Meal | null>(null);
 
   const storedStation = useSyncExternalStore(
     subscribeStorage,
@@ -112,6 +120,11 @@ export function Scanner({
     () => readStored(DIRECTION_KEY),
     () => null,
   );
+  const storedMeal = useSyncExternalStore(
+    subscribeStorage,
+    () => readStored(MEAL_KEY),
+    () => null,
+  );
 
   const station: Station =
     stationChoice ?? (isStation(storedStation) ? storedStation : initialStation);
@@ -119,16 +132,28 @@ export function Scanner({
     directionChoice ??
     (isScanDirection(storedDirection) ? storedDirection : initialDirection);
 
+  /*
+   * Defaults to whichever sitting the clock says, so a volunteer opening the
+   * scanner at breakfast does not have to pick breakfast first. An explicit
+   * tap still wins and is remembered.
+   */
+  const meal: Meal =
+    mealChoice ?? (isMeal(storedMeal) ? storedMeal : initialMeal);
+
   // The live values the camera callback reads. State would be captured stale
   // inside the decode closure, and a mid-flight toggle must not be lost.
   const stationRef = useRef(station);
   const directionRef = useRef(direction);
+  const mealRef = useRef(meal);
   useEffect(() => {
     stationRef.current = station;
   }, [station]);
   useEffect(() => {
     directionRef.current = direction;
   }, [direction]);
+  useEffect(() => {
+    mealRef.current = meal;
+  }, [meal]);
 
   // A volunteer manning the canteen all day sets this once; it survives a
   // reload or a PWA relaunch.
@@ -140,6 +165,11 @@ export function Scanner({
   function pickDirection(next: ScanDirection) {
     setDirectionChoice(next);
     writeStored(DIRECTION_KEY, next);
+  }
+
+  function pickMeal(next: Meal) {
+    setMealChoice(next);
+    writeStored(MEAL_KEY, next);
   }
 
   const stop = useCallback(() => {
@@ -170,6 +200,8 @@ export function Scanner({
         payload,
         stationRef.current,
         directionRef.current,
+        // Discarded server-side unless the station is the canteen.
+        mealRef.current,
       );
       setScan(result);
 
@@ -211,7 +243,10 @@ export function Scanner({
 
   useEffect(() => () => controlsRef.current?.stop(), []);
 
-  const posting = `${STATION_LABELS[station]} · ${DIRECTION_LABELS[direction]}`;
+  const posting =
+    station === "canteen"
+      ? `${STATION_LABELS[station]} · ${MEAL_LABELS[meal]}`
+      : `${STATION_LABELS[station]} · ${DIRECTION_LABELS[direction]}`;
 
   return (
     <div className="grid gap-4">
@@ -240,6 +275,34 @@ export function Scanner({
             ))}
           </div>
         </div>
+
+        {/* Only the canteen serves a sitting, and showing this at the exit
+            gate would invite a volunteer to set something with no effect. */}
+        {station === "canteen" && (
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
+              Sitting
+            </p>
+            <div role="radiogroup" aria-label="Meal" className="mt-2 grid grid-cols-4 gap-2">
+              {MEALS.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={meal === value}
+                  onClick={() => pickMeal(value)}
+                  className={`rounded-xl px-2 py-3 text-xs font-semibold transition-colors ${
+                    meal === value
+                      ? "bg-brand text-white"
+                      : "border border-border bg-surface text-muted hover:border-brand/40"
+                  }`}
+                >
+                  {MEAL_LABELS[value]}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
@@ -406,12 +469,28 @@ export function Scanner({
                 make this card lie about what was recorded. */}
             <p className="flex items-center gap-2 rounded-xl bg-success/10 px-4 py-3 text-sm font-semibold text-success">
               <BadgeCheck size={16} aria-hidden />
-              Recorded · {scan.station} · {scan.direction} · {timeOfDay(scan.scannedAt)}
+              Recorded · {scan.station}
+              {scan.meal ? ` · ${scan.meal}` : ` · ${scan.direction}`} ·{" "}
+              {timeOfDay(scan.scannedAt)}
             </p>
 
             {scan.firstTime && (
               <p className="mt-2 rounded-xl bg-brand-soft px-4 py-2.5 text-sm font-semibold text-brand">
                 First check-in of the event
+              </p>
+            )}
+
+            {/* Flagged, never refused. The row is already written — this tells
+                the volunteer what they are looking at and lets them decide,
+                which is the same rule the deactivated-card notice follows. */}
+            {scan.meal && scan.mealRepeat > 0 && (
+              <p className="mt-2 flex items-start gap-2 rounded-xl bg-warning/10 px-4 py-2.5 text-sm font-semibold text-warning">
+                <TriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
+                <span>
+                  Already had {scan.meal} today
+                  {scan.mealRepeat > 1 ? ` (${scan.mealRepeat} times)` : ""}. Second
+                  helping — your call.
+                </span>
               </p>
             )}
 

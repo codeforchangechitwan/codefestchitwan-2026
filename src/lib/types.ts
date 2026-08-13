@@ -52,14 +52,48 @@ export function isRole(value: unknown): value is Role {
  * normalises anything unknown to "other" — a CHECK constraint would raise a
  * raw Postgres error in a volunteer's face during the 07:00 queue.
  */
-export const STATIONS = ["registration", "exit", "canteen"] as const;
+export const STATIONS = ["registration", "exit", "canteen", "swag"] as const;
 export type Station = (typeof STATIONS)[number];
 
 export const STATION_LABELS: Record<Station, string> = {
   registration: "Registration",
   exit: "Exit",
   canteen: "Canteen",
+  swag: "Swag desk",
 };
+
+/**
+ * Canteen sittings. Eight of them across the three days, and the desk's only
+ * real question is "has this person already had this one today?".
+ *
+ * Meaningful only when the station is `canteen` — record_scan discards a meal
+ * sent with any other station, so "lunch at the exit gate" cannot be recorded.
+ */
+export const MEALS = ["breakfast", "lunch", "snacks", "dinner"] as const;
+export type Meal = (typeof MEALS)[number];
+
+export const MEAL_LABELS: Record<Meal, string> = {
+  breakfast: "Breakfast",
+  lunch: "Lunch",
+  snacks: "Snacks",
+  dinner: "Dinner",
+};
+
+export function isMeal(value: unknown): value is Meal {
+  return typeof value === "string" && (MEALS as readonly string[]).includes(value);
+}
+
+/**
+ * The sitting the timeline puts at this hour, in Kathmandu time, so the
+ * scanner opens on the right one instead of making a volunteer choose while a
+ * queue waits. Boundaries are generous — service runs late.
+ */
+export function mealAtHour(hour: number): Meal {
+  if (hour < 10) return "breakfast";
+  if (hour < 14) return "lunch";
+  if (hour < 17) return "snacks";
+  return "dinner";
+}
 
 export const SCAN_DIRECTIONS = ["in", "out"] as const;
 export type ScanDirection = (typeof SCAN_DIRECTIONS)[number];

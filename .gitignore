@@ -39,6 +39,12 @@ yarn-error.log*
 # Real people's credentials — distribute, then delete. Never commit.
 *credentials*.csv
 
+# The same credentials as printable per-member slips. Each PDF carries a live
+# password and a scannable entry QR. Ignored here as well as on the branch that
+# generates them, because the directory already exists in working copies where
+# that branch is not checked out — one `git add -A` away from being published.
+/credential-slips/
+
 # vercel
 .vercel
 

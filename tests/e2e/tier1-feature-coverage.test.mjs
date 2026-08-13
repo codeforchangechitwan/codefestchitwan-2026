@@ -222,6 +222,29 @@ export function runTier1Tests(runner) {
       );
     });
 
+    r.test("A meal is only recorded at the canteen, and never blocks a scan", () => {
+      const sql = readFileContent("supabase/migrations/20260813070000_meal_tracking.sql");
+      r.assert(
+        /v_station <> 'canteen'[\s\S]{0,120}v_meal := null/.test(sql),
+        "record_scan must discard a meal sent with any non-canteen station"
+      );
+      r.assertIncludes(sql, "v_meal_repeat", "A same-meal-today repeat count must be returned");
+      r.assert(
+        !/raise exception[^;]*meal/i.test(sql),
+        "A repeat helping must be flagged, never refused — the desk cannot argue with software"
+      );
+    });
+
+    r.test("The scanner offers a sitting only at the canteen", () => {
+      const scanner = readFileContent("src/app/(member)/admin/scan/scanner.tsx");
+      r.assert(
+        /station === "canteen" && \(/.test(scanner),
+        "The meal picker must be conditional on the canteen station"
+      );
+      r.assertIncludes(scanner, "mealRef", "The camera closure must read a live meal ref");
+      r.assertIncludes(scanner, "mealRepeat", "A second helping must be surfaced to the operator");
+    });
+
     r.test("Desk-staff directory never exposes card tokens or health data", () => {
       const sql = readFileContent("supabase/migrations/20260813060000_registration_intake.sql");
       const body = sql.slice(sql.indexOf("function public.participant_directory"));

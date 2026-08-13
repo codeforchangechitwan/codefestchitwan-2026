@@ -3,7 +3,7 @@ import { requireExecutiveApi } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { csvBody, csvResponse, type CsvColumn } from "@/lib/csv";
 import { formatScanTime, stationKey } from "@/lib/attendance";
-import { ROLE_LABELS, type Profile } from "@/lib/types";
+import { MEALS, ROLE_LABELS, isMeal, type Meal, type Profile } from "@/lib/types";
 
 /**
  * The roster, one row per member, with each person's attendance folded in.
@@ -23,6 +23,7 @@ type ScanLite = {
   profile_id: string;
   station: string;
   direction: string;
+  meal: string | null;
   created_at: string;
 };
 
@@ -34,9 +35,15 @@ type Attendance = {
   lastSeen: string | null;
   /** Where they last went through: tells the desk who is still on site. */
   lastDirection: string | null;
+  /** Servings taken per sitting, across all three days. */
+  meals: Record<Meal, number>;
 };
 
 type ExportRow = { member: Profile; attendance: Attendance };
+
+function emptyMeals(): Record<Meal, number> {
+  return { breakfast: 0, lunch: 0, snacks: 0, dinner: 0 };
+}
 
 const EMPTY: Attendance = {
   total: 0,
@@ -45,6 +52,7 @@ const EMPTY: Attendance = {
   exit: 0,
   lastSeen: null,
   lastDirection: null,
+  meals: emptyMeals(),
 };
 
 const COLUMNS: CsvColumn<ExportRow>[] = [
@@ -64,6 +72,11 @@ const COLUMNS: CsvColumn<ExportRow>[] = [
   { key: "total_scans", get: ({ attendance }) => attendance.total },
   { key: "registration_scans", get: ({ attendance }) => attendance.registration },
   { key: "canteen_scans", get: ({ attendance }) => attendance.canteen },
+  // One column per sitting: the question catering actually asks.
+  ...MEALS.map((meal) => ({
+    key: `${meal}_taken`,
+    get: ({ attendance }: ExportRow) => attendance.meals[meal],
+  })),
   { key: "exit_scans", get: ({ attendance }) => attendance.exit },
   {
     key: "last_seen",
@@ -90,7 +103,7 @@ export async function GET() {
     supabase.from("profiles").select("*").order("full_name"),
     supabase
       .from("check_ins")
-      .select("profile_id, station, direction, created_at")
+      .select("profile_id, station, direction, meal, created_at")
       .order("created_at", { ascending: true }),
   ]);
 
@@ -103,13 +116,15 @@ export async function GET() {
   // Rows arrive oldest first, so the last one seen for a member is the latest.
   const attendance = new Map<string, Attendance>();
   for (const scan of (scanRows ?? []) as ScanLite[]) {
-    const entry = attendance.get(scan.profile_id) ?? { ...EMPTY };
+    const entry = attendance.get(scan.profile_id) ?? { ...EMPTY, meals: emptyMeals() };
     entry.total += 1;
 
     const key = stationKey(scan.station);
     if (key === "registration") entry.registration += 1;
     else if (key === "canteen") entry.canteen += 1;
     else if (key === "exit") entry.exit += 1;
+
+    if (isMeal(scan.meal)) entry.meals[scan.meal] += 1;
 
     entry.lastSeen = scan.created_at;
     entry.lastDirection = scan.direction;

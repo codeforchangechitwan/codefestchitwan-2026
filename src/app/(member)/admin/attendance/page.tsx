@@ -11,7 +11,7 @@ import {
   stationKey,
   stationLabel,
 } from "@/lib/attendance";
-import { ROLE_LABELS, type Role } from "@/lib/types";
+import { MEAL_LABELS, MEALS, ROLE_LABELS, isMeal, type Role } from "@/lib/types";
 import { ManualCheckIn } from "./manual-check-in";
 
 export const metadata: Metadata = { title: "Attendance" };
@@ -39,6 +39,7 @@ type ScanRow = {
   created_at: string;
   station: string;
   direction: string;
+  meal: string | null;
   profile_id: string;
   scanned_by: string | null;
 };
@@ -62,6 +63,7 @@ export default async function AttendancePage(
   const dayFilter = single(params.day);
   const stationFilter = single(params.station);
   const directionFilter = single(params.direction);
+  const mealFilter = single(params.meal);
   const query = single(params.q).trim();
   const rawPage = Number.parseInt(single(params.page), 10);
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
@@ -87,7 +89,7 @@ export default async function AttendancePage(
 
   let request = supabase
     .from("check_ins")
-    .select("id, created_at, station, direction, profile_id, scanned_by")
+    .select("id, created_at, station, direction, meal, profile_id, scanned_by")
     .order("created_at", { ascending: false })
     .limit(MAX_ROWS);
 
@@ -106,6 +108,10 @@ export default async function AttendancePage(
 
   if (directionFilter === "in" || directionFilter === "out") {
     request = request.eq("direction", directionFilter);
+  }
+
+  if (isMeal(mealFilter)) {
+    request = request.eq("meal", mealFilter);
   }
 
   if (matchedIds !== null) {
@@ -148,12 +154,23 @@ export default async function AttendancePage(
     count: scans.filter((scan) => stationKey(scan.station) === value).length,
   })).filter((entry) => entry.count > 0 || entry.value !== "other");
 
+  /* Servings and unique people per sitting: the two numbers catering asks for. */
+  const byMeal = MEALS.map((value) => {
+    const rows = scans.filter((scan) => scan.meal === value);
+    return {
+      value,
+      label: MEAL_LABELS[value],
+      servings: rows.length,
+      people: new Set(rows.map((r) => r.profile_id)).size,
+    };
+  }).filter((entry) => entry.servings > 0);
+
   const totalPages = Math.max(1, Math.ceil(scans.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const visible = scans.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const filtersApplied = Boolean(
-    dayFilter || stationFilter || directionFilter || query,
+    dayFilter || stationFilter || directionFilter || mealFilter || query,
   );
 
   /**
@@ -165,6 +182,7 @@ export default async function AttendancePage(
       day: dayFilter,
       station: stationFilter,
       direction: directionFilter,
+      meal: mealFilter,
       q: query,
       page: currentPage > 1 ? String(currentPage) : "",
       ...Object.fromEntries(
@@ -233,6 +251,33 @@ export default async function AttendancePage(
         ))}
       </section>
 
+      {byMeal.length > 0 && (
+        <section className="mt-3">
+          <h2 className="text-[11px] font-bold uppercase tracking-wide text-muted">
+            Sittings — servings, and how many people they fed
+          </h2>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {byMeal.map(({ value, label, servings, people }) => (
+              <Link
+                key={value}
+                href={hrefWith({ meal: mealFilter === value ? "" : value, page: 1 })}
+                className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm transition-colors ${
+                  mealFilter === value
+                    ? "border-brand/40 bg-brand-soft"
+                    : "border-border bg-surface hover:border-brand/40"
+                }`}
+              >
+                <span>{label}</span>
+                <span className="font-mono text-xs tabular-nums text-muted">
+                  <span className="font-bold text-brand">{people}</span> fed
+                  {servings !== people && ` · ${servings} served`}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Filters ----------------------------------------------------------- */}
       <form method="get" className="mt-6 flex flex-wrap gap-2">
         <input
@@ -274,6 +319,18 @@ export default async function AttendancePage(
           <option value="">In and out</option>
           <option value="in">In only</option>
           <option value="out">Out only</option>
+        </select>
+        <select
+          name="meal"
+          defaultValue={mealFilter}
+          className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-brand"
+        >
+          <option value="">All sittings</option>
+          {MEALS.map((value) => (
+            <option key={value} value={value}>
+              {MEAL_LABELS[value]}
+            </option>
+          ))}
         </select>
         <button
           type="submit"
@@ -359,7 +416,9 @@ export default async function AttendancePage(
 
                 <span className="shrink-0 text-right">
                   <span className="block text-xs font-semibold">
-                    {stationLabel(scan.station)}
+                    {scan.meal && isMeal(scan.meal)
+                      ? MEAL_LABELS[scan.meal]
+                      : stationLabel(scan.station)}
                   </span>
                   <span className="block font-mono text-[11px] tabular-nums text-muted">
                     {formatScanTime(scan.created_at)}

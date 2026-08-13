@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { QrCode } from "lucide-react";
 import { requireDeskStaff } from "@/lib/auth";
-import { isScanDirection, isStation } from "@/lib/types";
+import { isMeal, isStation, isScanDirection, mealAtHour } from "@/lib/types";
 import { Scanner } from "./scanner";
 
 export const metadata: Metadata = { title: "Scan identity cards" };
@@ -17,6 +17,20 @@ export default async function ScanPage(props: PageProps<"/admin/scan">) {
   const station = isStation(params.station) ? params.station : "registration";
   const direction = isScanDirection(params.direction) ? params.direction : "in";
 
+  /*
+   * The sitting defaults to whatever the Kathmandu clock says, so a canteen
+   * volunteer who opens the scanner at breakfast is already on breakfast.
+   * ?meal=lunch overrides it for a pre-configured link.
+   */
+  const kathmanduHour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Kathmandu",
+    }).format(new Date()),
+  );
+  const meal = isMeal(params.meal) ? params.meal : mealAtHour(kathmanduHour);
+
   return (
     <div className="mx-auto w-full max-w-md px-4 py-8">
       <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
@@ -30,7 +44,11 @@ export default async function ScanPage(props: PageProps<"/admin/scan">) {
       </p>
 
       <div className="mt-6">
-        <Scanner initialStation={station} initialDirection={direction} />
+        <Scanner
+          initialStation={station}
+          initialDirection={direction}
+          initialMeal={meal}
+        />
       </div>
     </div>
   );

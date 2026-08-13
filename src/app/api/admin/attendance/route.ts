@@ -3,7 +3,7 @@ import { requireExecutiveApi } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { csvBody, csvResponse, type CsvColumn } from "@/lib/csv";
 import { formatScanTime, kathmanduDayRange, stationLabel } from "@/lib/attendance";
-import { ROLE_LABELS, type Role } from "@/lib/types";
+import { MEAL_LABELS, ROLE_LABELS, isMeal, type Role } from "@/lib/types";
 
 /**
  * The full check-in log as CSV, for the attendance register the college asks
@@ -18,6 +18,7 @@ type ScanRow = {
   created_at: string;
   station: string;
   direction: string;
+  meal: string | null;
   profile_id: string;
   scanned_by: string | null;
 };
@@ -47,6 +48,7 @@ const COLUMNS: CsvColumn<ExportRow>[] = [
   { key: "institution", get: ({ person }) => person?.institution },
   { key: "station", get: ({ scan }) => stationLabel(scan.station) },
   { key: "direction", get: ({ scan }) => (scan.direction === "out" ? "Out" : "In") },
+  { key: "meal", get: ({ scan }) => (isMeal(scan.meal) ? MEAL_LABELS[scan.meal] : "") },
   { key: "scanned_by", get: ({ scanner }) => scanner?.full_name },
 ];
 
@@ -59,7 +61,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from("check_ins")
-    .select("id, created_at, station, direction, profile_id, scanned_by")
+    .select("id, created_at, station, direction, meal, profile_id, scanned_by")
     .order("created_at", { ascending: false });
 
   const range = day ? kathmanduDayRange(day) : null;
