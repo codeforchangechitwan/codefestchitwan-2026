@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { requireMember } from "@/lib/auth";
 
 export type PasswordState = { error: string | null; success?: boolean };
@@ -13,7 +12,7 @@ export async function changePassword(
   _prev: PasswordState,
   formData: FormData,
 ): Promise<PasswordState> {
-  const { profile } = await requireMember({ allowPasswordChange: true });
+  await requireMember({ allowPasswordChange: true });
 
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
@@ -40,14 +39,24 @@ export async function changePassword(
     };
   }
 
-  // Clear the flag so the guard stops redirecting here. This uses the service
-  // role because must_change_password is a protected column: the profile guard
-  // trigger refuses self-writes to it, so a member cannot skip the forced
-  // change by PATCHing the flag straight at PostgREST.
-  await createAdminClient()
-    .from("profiles")
-    .update({ must_change_password: false })
-    .eq("id", profile.id);
+  // Clear the flag so the guard stops redirecting here. must_change_password is
+  // a protected column — the profile guard trigger refuses self-writes to it, so
+  // a member cannot skip the forced change by PATCHing the flag at PostgREST —
+  // and complete_password_change() is the one door through that guard. It
+  // checks the credential really did just change before clearing anything.
+  //
+  // This deliberately does NOT use the service role. It used to, and because
+  // the password above is already changed by the time this line runs, a host
+  // missing SUPABASE_SERVICE_ROLE_KEY left members stranded: slip password dead,
+  // flag still set, every retry a 500 on the same page.
+  const { error: flagError } = await supabase.rpc("complete_password_change");
+
+  if (flagError) {
+    return {
+      error:
+        "Your new password is saved, but we couldn't finish setting up your account. Sign in again with your new password, or ask at the Registration Desk.",
+    };
+  }
 
   redirect("/dashboard?welcome=1");
 }
