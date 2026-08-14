@@ -4,20 +4,9 @@ import { Trophy } from "lucide-react";
 import { requireMember } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Quiz } from "@/lib/types";
+import { LeaderboardLive, type LeaderboardRow } from "./leaderboard-live";
 
 export const metadata: Metadata = { title: "Leaderboard" };
-
-type Row = {
-  rank: number;
-  user_id: string;
-  full_name: string;
-  team_name: string | null;
-  score: number;
-  total_points: number;
-  duration_ms: number | null;
-};
-
-const MEDALS = ["🥇", "🥈", "🥉"];
 
 export default async function LeaderboardPage(props: PageProps<"/leaderboard">) {
   const { profile } = await requireMember();
@@ -35,13 +24,13 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
   const active =
     quizzes.find((quiz) => quiz.id === requested) ?? quizzes[0] ?? null;
 
-  let rows: Row[] = [];
+  let rows: LeaderboardRow[] = [];
   if (active) {
     const { data } = await supabase.rpc("quiz_leaderboard", {
       target_quiz: active.id,
       max_rows: 50,
     });
-    rows = (data ?? []) as Row[];
+    rows = (data ?? []) as LeaderboardRow[];
   }
 
   return (
@@ -75,66 +64,15 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
         <p className="mt-6 rounded-2xl border border-border bg-surface px-4 py-10 text-center text-sm text-muted">
           No quizzes published yet.
         </p>
-      ) : rows.length === 0 ? (
-        <p className="mt-6 rounded-2xl border border-border bg-surface px-4 py-10 text-center text-sm text-muted">
-          Nobody has finished <strong>{active.title}</strong> yet. Be the first —{" "}
-          <Link href="/quiz" className="font-medium text-brand underline">
-            play now
-          </Link>
-          .
-        </p>
       ) : (
-        <ol className="mt-6 grid gap-2">
-          {rows.map((row) => {
-            const isMe = row.user_id === profile.id;
-            return (
-              <li
-                key={row.user_id}
-                className={`flex items-center gap-3 rounded-xl border p-3 ${
-                  isMe
-                    ? "border-brand bg-brand-soft"
-                    : "border-border bg-surface"
-                }`}
-              >
-                <span
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                    row.rank <= 3 ? "text-lg" : "bg-surface-muted text-muted"
-                  }`}
-                  aria-label={`Rank ${row.rank}`}
-                >
-                  {MEDALS[row.rank - 1] ?? row.rank}
-                </span>
-
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold leading-tight">
-                    {row.full_name}
-                    {isMe && (
-                      <span className="ml-1.5 text-xs font-medium text-brand">
-                        (you)
-                      </span>
-                    )}
-                  </span>
-                  {row.team_name && (
-                    <span className="block truncate text-xs text-muted">
-                      {row.team_name}
-                    </span>
-                  )}
-                </span>
-
-                <span className="shrink-0 text-right">
-                  <span className="block font-mono font-bold tabular-nums text-brand">
-                    {row.score}/{row.total_points}
-                  </span>
-                  {row.duration_ms !== null && (
-                    <span className="block text-[11px] text-muted">
-                      {Math.round(row.duration_ms / 1000)}s
-                    </span>
-                  )}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        /* Server-rendered first paint, then live off the `leaderboard` pulse
+           as attempts are graded. */
+        <LeaderboardLive
+          quizId={active.id}
+          quizTitle={active.title}
+          meId={profile.id}
+          initial={rows}
+        />
       )}
 
       <p className="mt-6 text-xs text-muted">

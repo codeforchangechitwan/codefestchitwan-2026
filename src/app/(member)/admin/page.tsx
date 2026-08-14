@@ -8,6 +8,7 @@ import {
   QrCode,
   ContactRound,
   ScanLine,
+  Scissors,
   Shield,
   Shuffle,
   Timer,
@@ -198,6 +199,12 @@ export default async function AdminPage() {
           icon={GitFork}
           title="GitHub profiles"
           body="Handles by team, and who has not posted one"
+        />
+        <AdminLink
+          href="/ribbon"
+          icon={Scissors}
+          title="Inauguration"
+          body="Ribbon screen for the projector, and the button that starts it"
         />
       </section>
     </div>

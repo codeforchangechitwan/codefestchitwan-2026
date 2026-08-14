@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useLivePulse } from "@/lib/use-live-pulse";
 
 export type PitchStatus = "idle" | "running" | "paused";
 
@@ -21,22 +23,32 @@ export type PitchState = {
   serverNow: string;
 };
 
+/** Safety net while the socket is up: a pulse can be missed, a socket can lie. */
+const HEARTBEAT_LIVE_MS = 30000;
+/** No socket — this is the old polling behaviour, unchanged. */
 const FAST_MS = 2000;
 const SLOW_MS = 10000;
 const MAX_BACKOFF_MS = 30000;
 const REQUEST_TIMEOUT_MS = 4000;
 
 /**
- * Polls /api/pitch.
+ * The stage clock.
  *
- * Deliberately a poll and not Supabase Realtime: this codebase has no
- * client-side Supabase usage, and a websocket reconnect storm on venue wifi
- * mid-ceremony is a worse failure than a missed 2s tick.
+ * State changes arrive as a realtime pulse on `event` and are read back
+ * STRAIGHT FROM SUPABASE, so a hall of 150 phones watching the timer costs the
+ * VPS nothing. It used to poll /api/pitch every 2s while a pitch ran — about
+ * 75 req/s through nginx and Node on a 1 GB box, for data that changes maybe
+ * six times an hour.
  *
- * The poll carries STATE CHANGES only — start, pause, next. The digits run
- * locally from the absolute deadline, corrected by the server/client clock
- * skew measured on each response, so a phone with a wrong clock still shows
- * the right number.
+ * The digits still run locally from the absolute deadline, corrected by the
+ * server/client skew measured on each read, so a handset with a wrong clock
+ * shows the right number.
+ *
+ * The old poll is kept verbatim as the fallback path, because the concern that
+ * originally argued against realtime is real: venue wifi drops websockets. If
+ * the socket is not up we poll exactly as before, and /api/pitch also covers
+ * the case where the access token has expired — its 401 triggers the one
+ * router.refresh() that renews the cookie.
  */
 export function usePitchState() {
   const router = useRouter();
@@ -49,8 +61,51 @@ export function usePitchState() {
   const backoffRef = useRef(FAST_MS);
   const refreshedRef = useRef(false);
   const stoppedRef = useRef(false);
+  const liveRef = useRef(false);
 
-  const poll = useCallback(async () => {
+  /** Read by the cadence logic, which must not close over stale state. */
+  const statusRef = useRef<PitchStatus>("idle");
+
+  const apply = useCallback((payload: PitchState) => {
+    statusRef.current = payload.status;
+    setSkewMs(Date.parse(payload.serverNow) - Date.now());
+    setState((current) =>
+      current &&
+      current.updatedAt === payload.updatedAt &&
+      current.status === payload.status &&
+      current.endsAt === payload.endsAt
+        ? current
+        : payload,
+    );
+    setDegraded(false);
+  }, []);
+
+  /** Primary path: the browser asks Supabase directly. */
+  const readDirect = useCallback(async () => {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("pitch_state");
+    const row = Array.isArray(data) ? data[0] : null;
+    if (error || !row) throw error ?? new Error("no pitch row");
+
+    apply({
+      status: row.status as PitchStatus,
+      teamId: row.team_id,
+      teamCode: row.team_code,
+      teamName: row.team_name,
+      pitchOrder: row.pitch_order,
+      label: row.label,
+      durationSeconds: row.duration_seconds,
+      endsAt: row.ends_at,
+      remainingSeconds: row.remaining_seconds,
+      nextTeamCode: row.next_team_code,
+      nextTeamName: row.next_team_name,
+      updatedAt: row.updated_at,
+      serverNow: row.server_now,
+    });
+  }, [apply]);
+
+  /** Fallback path: the original /api/pitch poll, including cookie renewal. */
+  const readViaApi = useCallback(async () => {
     const controller = new AbortController();
     const abort = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -61,9 +116,6 @@ export function usePitchState() {
       });
 
       if (response.status === 401) {
-        // The route is excluded from the proxy matcher so polls stay cheap,
-        // which means nothing refreshes the auth cookie. One router.refresh()
-        // goes through a matched route and renews it.
         if (!refreshedRef.current) {
           refreshedRef.current = true;
           router.refresh();
@@ -73,27 +125,52 @@ export function usePitchState() {
 
       if (!response.ok) throw new Error(`status ${response.status}`);
 
-      const payload = (await response.json()) as PitchState;
-      setSkewMs(Date.parse(payload.serverNow) - Date.now());
-      setState((current) =>
-        current &&
-        current.updatedAt === payload.updatedAt &&
-        current.status === payload.status &&
-        current.endsAt === payload.endsAt
-          ? current
-          : payload,
-      );
-
+      apply((await response.json()) as PitchState);
       refreshedRef.current = false;
-      backoffRef.current = payload.status === "running" ? FAST_MS : SLOW_MS;
-      setDegraded(false);
-    } catch {
-      backoffRef.current = Math.min(backoffRef.current * 2, MAX_BACKOFF_MS);
-      setDegraded(true);
     } finally {
       clearTimeout(abort);
     }
-  }, [router]);
+  }, [apply, router]);
+
+  /** While the socket is up a pulse does the work, so the timer is only a
+   *  safety net. Without it, fall back to the original cadence: fast while a
+   *  pitch is on the clock, slow while the stage is idle. */
+  const restIntervalMs = useCallback(
+    () =>
+      liveRef.current
+        ? HEARTBEAT_LIVE_MS
+        : statusRef.current === "running"
+          ? FAST_MS
+          : SLOW_MS,
+    [],
+  );
+
+  const poll = useCallback(async () => {
+    try {
+      await readDirect();
+      backoffRef.current = restIntervalMs();
+    } catch {
+      try {
+        await readViaApi();
+        backoffRef.current = restIntervalMs();
+      } catch {
+        backoffRef.current = Math.min(backoffRef.current * 2, MAX_BACKOFF_MS);
+        setDegraded(true);
+      }
+    }
+  }, [readDirect, readViaApi, restIntervalMs]);
+
+  // A pulse means the timer was started, paused, extended or stopped — read it
+  // back immediately rather than waiting for the heartbeat.
+  const live = useLivePulse(["event"], () => {
+    void poll();
+  });
+
+  // Mirrored into a ref so restIntervalMs() can read it without being
+  // recreated, and assigned in an effect rather than during render.
+  useEffect(() => {
+    liveRef.current = live;
+  }, [live]);
 
   useEffect(() => {
     stoppedRef.current = false;
@@ -116,7 +193,7 @@ export function usePitchState() {
 
     void run();
 
-    // Phones live in pockets. Come back instantly rather than up to 10s late.
+    // Phones live in pockets. Come back instantly rather than up to 30s late.
     const onVisible = () => {
       if (document.visibilityState === "visible") {
         if (timerRef.current) clearTimeout(timerRef.current);
@@ -130,7 +207,7 @@ export function usePitchState() {
       if (timerRef.current) clearTimeout(timerRef.current);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [poll]);
+  }, [poll, live]);
 
-  return { state, skewMs, degraded, refresh: poll };
+  return { state, skewMs, degraded, live, refresh: poll };
 }
