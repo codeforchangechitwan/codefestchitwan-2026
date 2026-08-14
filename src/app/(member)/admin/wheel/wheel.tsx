@@ -39,6 +39,11 @@ export function Wheel({
   const stripRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
+  /** Every team in this ceremony, drawn or not. Fixed for the life of the
+   *  mount, so a reset can restore the count without double-counting the
+   *  teams drawn since the page loaded. */
+  const total = undrawn.length + alreadyDrawn.length;
+
   const [drawn, setDrawn] = useState<Entry[]>(alreadyDrawn);
   const [remaining, setRemaining] = useState(undrawn.length);
   const [winner, setWinner] = useState<Entry | null>(null);
@@ -115,7 +120,12 @@ export function Wheel({
         return;
       }
 
-      const decoys = shuffled(undrawn.map((t) => t.name));
+      // Decoys come from the teams still in the hat at this moment, not the
+      // list the page loaded with — otherwise the reel scrolls past names that
+      // were already called earlier in the same ceremony.
+      const stillIn = new Set(drawn.map((entry) => entry.id));
+      const pool = undrawn.filter((team) => !stillIn.has(team.id));
+      const decoys = shuffled((pool.length > 0 ? pool : undrawn).map((t) => t.name));
       const names: string[] = [];
       for (let i = 0; i < RUNWAY; i += 1) {
         names.push(decoys[i % Math.max(decoys.length, 1)] ?? entry.name);
@@ -136,7 +146,7 @@ export function Wheel({
       }
       setDrawn([]);
       setWinner(null);
-      setRemaining(undrawn.length + drawn.length);
+      setRemaining(total);
       setConfirmReset(false);
     });
   }

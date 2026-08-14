@@ -93,7 +93,20 @@ export default async function WheelPage(props: PageProps<"/admin/wheel">) {
         </p>
       ) : (
         <div className="mt-6">
-          <Wheel mode={mode} undrawn={undrawn} alreadyDrawn={alreadyDrawn} />
+          {/*
+           * key={mode} is load-bearing. The Tables/Pitch links are client-side
+           * navigations that re-render this page in place, so without a key
+           * React reconciles the two ceremonies onto the same <Wheel> instance
+           * and keeps its state: the pitch draw would open showing the table
+           * draw's board and its "N left" count, and the button could read
+           * "Draw complete" before a single pitch slot had been drawn.
+           */}
+          <Wheel
+            key={mode}
+            mode={mode}
+            undrawn={undrawn}
+            alreadyDrawn={alreadyDrawn}
+          />
         </div>
       )}
     </div>
