@@ -43,9 +43,20 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  /*
+   * Declaring both schemes at the document level stops Chrome for Android from
+   * applying its "Auto Dark Theme" force-darkening. Without it, a phone in OS
+   * dark mode viewing the light theme (whose root is `color-scheme: light`)
+   * gets its colors rewritten by the browser: solid and gradient buttons are
+   * darkened to near-black while their hardcoded white labels are left alone,
+   * so the labels vanish. The per-theme `color-scheme` in globals.css still
+   * decides how native controls actually render.
+   */
+  colorScheme: "dark light",
+  /* Must track --background in globals.css; these were left on an older palette. */
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
-    { media: "(prefers-color-scheme: dark)", color: "#090d16" },
+    { media: "(prefers-color-scheme: light)", color: "#fff8f3" },
+    { media: "(prefers-color-scheme: dark)", color: "#140c07" },
   ],
 };
 
