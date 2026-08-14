@@ -147,6 +147,13 @@ npm run build && npm start
   prints the rest for a human; pass `--names=names.csv` (`email,full_name`) to
   settle them. It never guesses a login address — `--emails` is a separate flag
   and only ever touches high-confidence rows.
+- **Who's-who sheet**: `scripts/make-staff-list-pdf.mjs` prints the organising
+  members with their portfolios and the volunteers by name, on one page with no
+  credentials on it, so it can go on a wall or into a volunteer's hand. It lists
+  any account still carrying an email-derived name in a panel at the end —
+  settle those with `normalise-identities.mjs` and re-run. Like the participant
+  ID list, the PDF is gitignored: regenerate it rather than committing a roster
+  of named people to a public repo.
 - **`NEXT_PUBLIC_SITE_URL` before printing badges**: the import withholds the
   `card_url` column while it points at localhost, because a badge that resolves
   to somebody's laptop is not discovered until it is scanned at the desk.

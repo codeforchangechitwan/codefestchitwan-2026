@@ -56,6 +56,11 @@ yarn-error.log*
 # is public. Regenerate it from the database instead of committing it.
 /codefest-2026-participant-ids.pdf
 
+# The organising team and volunteer list written by scripts/make-staff-list-pdf.mjs.
+# Same reasoning as the participant list above: no credentials on it, but it is
+# still 27 named people and their portfolios, and this repo is public.
+/codefest-2026-staff-list.pdf
+
 # vercel
 .vercel
 
