@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ExternalLink, Gavel, Lock } from "lucide-react";
+import { ExternalLink, FileText, Gavel, Lock } from "lucide-react";
 import { requireJudge } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { EventSettings, Submission, Team } from "@/lib/types";
+import { JUDGING_SHEET_PDF, TOTAL_MARKS } from "@/lib/judging";
 
 export const metadata: Metadata = { title: "Judging" };
 
@@ -56,6 +57,18 @@ export default async function JudgePage() {
         Welcome, {profile.full_name}. Scoring is on paper — this is the entry
         list, in pitch order.
       </p>
+
+      {/* The paper the scoring actually happens on. Here because a judge who
+          needs another copy is standing in the Main Hall, not at a desk. */}
+      <a
+        href={JUDGING_SHEET_PDF}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-xs font-semibold transition-colors hover:border-brand/40"
+      >
+        <FileText size={14} className="text-brand" aria-hidden />
+        Judging sheet ({TOTAL_MARKS} marks) — print or view
+      </a>
 
       {!judgingOpen ? (
         <div className="mt-8 rounded-2xl border border-border bg-surface px-4 py-10 text-center">
