@@ -6,8 +6,16 @@ import { requireExecutive } from "@/lib/auth";
 
 export type HackathonResult = { ok: boolean; message: string };
 
-/** 36 hours, and the bounds a typo has to clear before it reaches the clock. */
-export const DEFAULT_DURATION_SECONDS = 36 * 3600;
+/*
+ * Bounds a typo has to clear before it reaches the clock.
+ *
+ * NOT exported, and nothing else here may be either: a "use server" file can
+ * only export async functions. Exporting a plain constant throws
+ * "can only export async functions, found number" when the module is
+ * evaluated, which surfaces as a 500 on the page and React #441 in the
+ * browser — and neither tsc, eslint, nor next build catches it.
+ * The shared default lives in lib/hackathon.ts as HACK_DEFAULT_SECONDS.
+ */
 const MIN_DURATION_SECONDS = 3600;
 const MAX_DURATION_SECONDS = 96 * 3600;
 
