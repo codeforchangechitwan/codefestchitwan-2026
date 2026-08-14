@@ -12,6 +12,11 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Countdown } from "@/components/countdown";
+import {
+  PublicHackClock,
+  type PublicHackState,
+} from "@/components/public-hack-clock";
+import { createClient } from "@/lib/supabase/server";
 import { EVENT } from "@/lib/event";
 import { ANNOUNCED_PARTNERS, PARTNERS } from "@/lib/partners";
 import { ROLES, ROLE_LABELS } from "@/lib/types";
@@ -52,7 +57,38 @@ const FEATURES = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  /*
+   * The live hackathon clock, read through hackathon_public() — the one
+   * hackathon read granted to `anon`, deliberately narrower than the members'
+   * one. Server-rendered so the countdown is right in the HTML for a visitor
+   * with JavaScript off, and for anything that scrapes the page.
+   *
+   * Failure here must never take the marketing page down, so a bad read just
+   * falls back to the pre-event countdown.
+   */
+  let hack: PublicHackState = {
+    status: "idle",
+    endsAt: null,
+    coordinatorName: null,
+    skewMs: 0,
+  };
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.rpc("hackathon_public");
+    const row = Array.isArray(data) ? data[0] : null;
+    if (row) {
+      hack = {
+        status: row.status,
+        endsAt: row.ends_at,
+        coordinatorName: row.coordinator_name,
+        skewMs: 0,
+      };
+    }
+  } catch {
+    // Keep the fallback.
+  }
+
   return (
     <div className="relative overflow-hidden">
       {/* Background Ambient Radial Glows */}
@@ -114,7 +150,15 @@ export default function HomePage() {
             </div>
 
             <div className="mt-8">
-              <Countdown target={EVENT.startsAt} label="Registration desk opens in" />
+              <PublicHackClock
+                initial={hack}
+                fallback={
+                  <Countdown
+                    target={EVENT.startsAt}
+                    label="Registration desk opens in"
+                  />
+                }
+              />
             </div>
 
             <div className="mt-8 flex flex-wrap gap-4">
