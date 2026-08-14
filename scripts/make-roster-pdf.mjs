@@ -16,6 +16,13 @@
  * index follows at the back for team-by-team check-in, listing names only.
  *
  * Usage: node scripts/make-roster-pdf.mjs [--in FILE] [--out FILE] [--no-qr]
+ *                                         [--role executive,volunteer]
+ *
+ * --role narrows it to those roles, for handing the volunteer coordinator
+ * their own people's logins without also handing over 77 students' passwords.
+ * The warning banner, the confidentiality footer and everything else about the
+ * page are unchanged: a shorter list of live passwords is still a list of live
+ * passwords.
  *
  * As with the slips, nothing is echoed to the terminal but counts and paths.
  */
@@ -32,8 +39,37 @@ function flag(name, fallback) {
 }
 
 const IN_PATH = flag("in", "codefest-2026-credentials.csv");
-const OUT_PATH = flag("out", "credential-slips/registration-desk-roster.pdf");
 const WITH_QR = !process.argv.includes("--no-qr");
+
+/**
+ * `--role executive,volunteer` narrows the roster to those roles.
+ *
+ * The desk needs the whole file; a role brief needs a page it can hand to the
+ * volunteer coordinator without also handing over 77 students' passwords. Same
+ * document, same source of truth, fewer rows — rather than a second script
+ * that could drift from this one about what a password is.
+ */
+const ROLE_FLAG = flag("role", null);
+const WANTED = ROLE_FLAG
+  ? new Set(
+      ROLE_FLAG.split(",")
+        .map((r) => r.trim().toLowerCase())
+        .filter(Boolean),
+    )
+  : null;
+
+const titleCase = (s) => s[0].toUpperCase() + s.slice(1);
+const ROLE_SLUG = WANTED ? [...WANTED].sort().join("-") : null;
+const ROLE_TITLE = WANTED
+  ? `${[...WANTED].sort().map(titleCase).join(" & ")} roster`
+  : "Registration desk roster";
+
+const OUT_PATH = flag(
+  "out",
+  WANTED
+    ? `credential-slips/${ROLE_SLUG}-roster.pdf`
+    : "credential-slips/registration-desk-roster.pdf",
+);
 
 const PAGE_W = 842; // A4 landscape: the row needs the width more than the page
 const PAGE_H = 595; //   needs the length
@@ -250,18 +286,40 @@ function teamIndexPages(members, startPage, pageCount) {
 
 /* ------------------------------------------------------------------- run */
 
-const { members, skipped } = loadMembers(IN_PATH);
-if (!members.length) {
+const { members: allMembers, skipped } = loadMembers(IN_PATH);
+if (!allMembers.length) {
   console.error(`! No usable members in ${IN_PATH}.`);
   process.exit(1);
 }
+
+const members = WANTED
+  ? allMembers.filter((m) => WANTED.has((m.role ?? "").toLowerCase()))
+  : allMembers;
+
+if (!members.length) {
+  const available = [...new Set(allMembers.map((m) => m.role).filter(Boolean))];
+  console.error(
+    `! No members with role ${[...WANTED].join(", ")} in ${IN_PATH}.\n` +
+      `  Roles present: ${available.sort().join(", ")}`,
+  );
+  process.exit(1);
+}
+
+/*
+ * The team index is a participant device — it exists so the desk can check a
+ * team in together. Staff have no team, so for a filtered roster it would be
+ * one "No team" heading above a copy of the list that is already on page one.
+ */
+const withIndex = members.some((m) => m.team);
 
 const tablePages = Math.ceil(members.length / ROWS_PER_PAGE);
 
 // The index needs the total page count for its footer, and its own length
 // depends on the teams, so it is laid out once to be measured and once for
 // real. Cheap at this size, and it keeps "Page n of m" honest.
-const probe = teamIndexPages(members, tablePages + 1, tablePages + 1);
+const probe = withIndex
+  ? teamIndexPages(members, tablePages + 1, tablePages + 1)
+  : [];
 const pageCount = tablePages + probe.length;
 
 const pages = [];
@@ -273,6 +331,7 @@ for (let p = 0; p < tablePages; p++) {
     pageCount,
     first: slice[0].full_name,
     last: slice[slice.length - 1].full_name,
+    title: ROLE_TITLE,
   });
 
   slice.forEach((member, i) => {
@@ -282,7 +341,7 @@ for (let p = 0; p < tablePages; p++) {
   pages.push(c);
 }
 
-pages.push(...teamIndexPages(members, tablePages + 1, pageCount));
+if (withIndex) pages.push(...teamIndexPages(members, tablePages + 1, pageCount));
 
 fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
 fs.writeFileSync(OUT_PATH, buildPdf(pages));
@@ -290,6 +349,7 @@ fs.writeFileSync(OUT_PATH, buildPdf(pages));
 console.log(
   `Wrote ${OUT_PATH} — ${members.length} members across ${pages.length} pages ` +
     `(${tablePages} roster + ${pages.length - tablePages} team index)` +
+    `${WANTED ? `, limited to ${[...WANTED].sort().join(", ")}` : ""}` +
     `${WITH_QR ? "" : ", without QR codes"}.`,
 );
 console.log("Organisers only. Keep it at the desk; shred or delete it after the event.");
