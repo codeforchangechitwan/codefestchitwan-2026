@@ -18,6 +18,8 @@ import { getSchedule } from "@/lib/schedule";
 import { EVENT } from "@/lib/event";
 import { ROLE_LABELS } from "@/lib/types";
 import type { Announcement, ScheduleEvent } from "@/lib/types";
+import { hackathonFromRow } from "@/lib/hackathon";
+import { HackStrip } from "./hack-strip";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -55,6 +57,14 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
     .limit(3);
   const announcements = (announcementRows ?? []) as Announcement[];
 
+  // One singleton read, server-rendered so the countdown is correct before any
+  // JS runs; the strip then keeps itself live off the `event` pulse.
+  const { data: hackRows } = await supabase.rpc("hackathon_state");
+  const hackathon = hackathonFromRow(
+    Array.isArray(hackRows) ? hackRows[0] : null,
+    0,
+  );
+
   const isExecutive = profile.role === "executive";
   const isDeskStaff = isExecutive || profile.role === "volunteer";
 
@@ -91,6 +101,8 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
           )}
         </div>
       </header>
+
+      <HackStrip initial={hackathon} />
 
       {/* Now / next ------------------------------------------------------ */}
       <section className="mt-6 grid gap-3 sm:grid-cols-2">

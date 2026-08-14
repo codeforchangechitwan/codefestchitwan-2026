@@ -206,6 +206,12 @@ export default async function AdminPage() {
           title="Inauguration"
           body="Ribbon screen for the projector, and the button that starts it"
         />
+        <AdminLink
+          href="/hackathon"
+          icon={Timer}
+          title="Hackathon clock"
+          body="The 36-hour countdown, and the button that starts it"
+        />
       </section>
     </div>
   );
