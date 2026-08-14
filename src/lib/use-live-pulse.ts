@@ -44,6 +44,12 @@ async function ensureChannel() {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) return;
+
+  // Re-check after async pause to prevent race condition when multiple
+  // components mount simultaneously and call ensureChannel.
+  if (channel) return;
+  if (listeners.size === 0) return;
+
   supabase.realtime.setAuth(session.access_token);
 
   channel = supabase
@@ -67,7 +73,7 @@ function teardownIfIdle() {
   const dead = channel;
   channel = null;
   setConnected(false);
-  void dead.unsubscribe();
+  void createClient().removeChannel(dead);
 }
 
 /**
