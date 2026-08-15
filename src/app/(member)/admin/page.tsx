@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Bell,
+  ExternalLink,
   FolderGit2,
   Gamepad2,
   GitFork,
@@ -199,6 +200,12 @@ export default async function AdminPage() {
           icon={GitFork}
           title="GitHub profiles"
           body="Handles by team, and who has not posted one"
+        />
+        <AdminLink
+          href="/admin/form-link"
+          icon={ExternalLink}
+          title="Form button"
+          body="Point the public button at a Google Form, or hide it"
         />
         <AdminLink
           href="/ribbon"

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireExecutive } from "@/lib/auth";
 import { generatePassword } from "@/lib/password";
 import { sendCredentialsEmail } from "@/lib/mail";
+import { FORM_LABEL_MAX, FORM_NOTE_MAX, isFormUrl } from "@/lib/form-link";
 import { isRole, ROLES, type Role } from "@/lib/types";
 
 export type MemberResult = {
@@ -311,5 +312,77 @@ export async function setJudgingOpen(
     message: open
       ? "Judging is open — the panel can now see every submitted entry."
       : "Judging closed. Judges can no longer see entries.",
+  };
+}
+
+/**
+ * Points the public form button at a Google Form — or switches it off.
+ *
+ * The database has the same four CHECK constraints, and they are the ones that
+ * actually hold. These checks exist so a mistyped URL comes back as a sentence
+ * an organiser can act on instead of a Postgres constraint name.
+ */
+export async function saveFormLink(
+  formData: FormData,
+): Promise<{ ok: boolean; message: string }> {
+  const { profile: actor } = await requireExecutive();
+
+  const url = String(formData.get("form_url") ?? "").trim();
+  const label = String(formData.get("form_label") ?? "").trim();
+  const note = String(formData.get("form_note") ?? "").trim();
+  const enabled = formData.get("form_enabled") === "on";
+
+  if (!label) {
+    return { ok: false, message: "Give the button some words." };
+  }
+  if (label.length > FORM_LABEL_MAX) {
+    return {
+      ok: false,
+      message: `Keep the button text under ${FORM_LABEL_MAX} characters.`,
+    };
+  }
+  if (note.length > FORM_NOTE_MAX) {
+    return {
+      ok: false,
+      message: `Keep the note under ${FORM_NOTE_MAX} characters.`,
+    };
+  }
+  if (url && !isFormUrl(url)) {
+    return {
+      ok: false,
+      message:
+        "That doesn't look like a link. Paste the whole thing, starting with https:// — a Google Form's Send → link tab gives you one.",
+    };
+  }
+  // Not a silent correction: switching the button on is the whole point of the
+  // screen, and doing it with no destination has to fail loudly.
+  if (enabled && !url) {
+    return { ok: false, message: "Add the form link before switching it on." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("event_settings")
+    .update({
+      form_url: url || null,
+      form_label: label,
+      form_note: note || null,
+      form_enabled: enabled,
+      updated_at: new Date().toISOString(),
+      updated_by: actor.id,
+    })
+    .eq("id", true);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath("/admin/form-link");
+
+  return {
+    ok: true,
+    message: enabled
+      ? "Saved. The button is live on the homepage and the dashboard."
+      : "Saved. The button is hidden — nobody sees it until you switch it on.",
   };
 }

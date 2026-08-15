@@ -12,6 +12,7 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
+import { FormLinkButton } from "@/components/form-link-button";
 import { requireMember } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getSchedule } from "@/lib/schedule";
@@ -103,6 +104,13 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
       </header>
 
       <HackStrip initial={hackathon} />
+
+      {/* The Google Form button, when an executive has switched one on.
+          Above the fold on purpose: the point of putting a form here is that
+          people fill it in, and it disappears again the moment it is off. */}
+      <div className="mt-6 empty:hidden">
+        <FormLinkButton variant="card" />
+      </div>
 
       {/* Now / next ------------------------------------------------------ */}
       <section className="mt-6 grid gap-3 sm:grid-cols-2">

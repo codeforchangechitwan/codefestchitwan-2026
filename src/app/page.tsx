@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Countdown } from "@/components/countdown";
+import { FormLinkButton } from "@/components/form-link-button";
 import {
   PublicHackClock,
   type PublicHackState,
@@ -161,7 +162,11 @@ export default async function HomePage() {
               />
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-wrap items-start gap-4">
+              {/* Renders nothing until an executive switches it on in
+                  /admin/form-link, so the row degrades to the two links
+                  below. */}
+              <FormLinkButton variant="hero" />
               <Link
                 href="/login"
                 className="btn-primary-glass inline-flex items-center gap-2.5 px-6 py-3.5 text-sm font-bold shadow-lg"
