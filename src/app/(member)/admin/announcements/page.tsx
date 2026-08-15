@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Bell } from "lucide-react";
 import { requireExecutive } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ROLE_LABELS, type Announcement } from "@/lib/types";
+import type { Announcement } from "@/lib/types";
 import { AnnouncementForm } from "./announcement-form";
+import { AnnouncementRow } from "./announcement-row";
 
 export const metadata: Metadata = { title: "Post announcement" };
 
@@ -35,8 +36,12 @@ export default async function AdminAnnouncementsPage() {
 
       <section className="mt-8">
         <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
-          Recent
+          Posted
         </h2>
+        <p className="mt-1 text-sm text-muted">
+          Editing a notice keeps its place in the list and reaches open tabs
+          straight away. Deleting removes it everywhere, and cannot be undone.
+        </p>
         {announcements.length === 0 ? (
           <p className="mt-3 rounded-2xl border border-border bg-surface px-4 py-8 text-center text-sm text-muted">
             Nothing posted yet.
@@ -44,22 +49,7 @@ export default async function AdminAnnouncementsPage() {
         ) : (
           <ul className="mt-3 grid gap-2">
             {announcements.map((item) => (
-              <li
-                key={item.id}
-                className={`rounded-xl border p-4 ${
-                  item.urgent
-                    ? "border-danger/30 bg-danger/5"
-                    : "border-border bg-surface"
-                }`}
-              >
-                <p className="font-semibold leading-snug">{item.title}</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted">{item.body}</p>
-                <p className="mt-2 text-xs text-muted">
-                  {item.audience === null
-                    ? "Everyone"
-                    : item.audience.map((role) => ROLE_LABELS[role]).join(", ")}
-                </p>
-              </li>
+              <AnnouncementRow key={item.id} announcement={item} />
             ))}
           </ul>
         )}

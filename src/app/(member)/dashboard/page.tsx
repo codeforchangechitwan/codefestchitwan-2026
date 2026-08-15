@@ -12,6 +12,7 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
+import { AnnouncementBody } from "@/components/announcement-body";
 import { FormLinkButton } from "@/components/form-link-button";
 import { requireMember } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -249,7 +250,10 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
                 }`}
               >
                 <p className="font-semibold leading-snug">{item.title}</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted">{item.body}</p>
+                <AnnouncementBody
+                  text={item.body}
+                  className="mt-1 text-sm leading-relaxed text-muted"
+                />
               </li>
             ))}
           </ul>

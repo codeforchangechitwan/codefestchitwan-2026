@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import { AnnouncementBody } from "@/components/announcement-body";
 import { createClient } from "@/lib/supabase/client";
 import { useLiveQuery } from "@/lib/use-live-query";
 import type { Announcement } from "@/lib/types";
@@ -74,9 +75,10 @@ export function AnnouncementList({ initial }: { initial: Announcement[] }) {
                 {FORMATTER.format(new Date(item.created_at))}
               </time>
             </div>
-            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted">
-              {item.body}
-            </p>
+            <AnnouncementBody
+              text={item.body}
+              className="mt-2 text-sm leading-relaxed text-muted"
+            />
           </li>
         ))}
       </ul>

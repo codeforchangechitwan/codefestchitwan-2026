@@ -191,37 +191,117 @@ export async function setMemberRole(userId: string, role: string) {
 
 export type AnnouncementResult = { ok: boolean; message: string };
 
+type AnnouncementFields = {
+  title: string;
+  body: string;
+  urgent: boolean;
+  audience: Role[] | null;
+};
+
+/**
+ * The one reading of the announcement form, shared by posting and editing so
+ * the two cannot drift apart on what counts as valid or on who the audience
+ * ends up being.
+ *
+ * Returns the error sentence as a plain string, the same shape the team
+ * actions use.
+ */
+function readAnnouncementFields(formData: FormData): AnnouncementFields | string {
+  const title = String(formData.get("title") ?? "").trim();
+  // Normalised to plain newlines on the way in: the textarea submits CRLF and
+  // the rendered body is `whitespace-pre-line`, where a stray carriage return
+  // can show up as an extra gap.
+  const body = String(formData.get("body") ?? "")
+    .replace(/\r\n?/g, "\n")
+    .trim();
+  const urgent = formData.get("urgent") === "on";
+  const audience = ROLES.filter((role) => formData.get(`audience_${role}`) === "on");
+
+  if (title.length < 3) return "Give the notice a title.";
+  if (body.length < 3) return "Write the announcement body.";
+
+  return {
+    title,
+    body,
+    urgent,
+    // No boxes ticked — or every box ticked — means everyone.
+    audience: audience.length > 0 && audience.length < ROLES.length ? audience : null,
+  };
+}
+
+/** Every screen that shows an announcement, after any write. */
+function revalidateAnnouncements() {
+  revalidatePath("/announcements");
+  revalidatePath("/dashboard");
+  revalidatePath("/admin/announcements");
+}
+
 export async function postAnnouncement(
   _prev: AnnouncementResult | null,
   formData: FormData,
 ): Promise<AnnouncementResult> {
   const { profile } = await requireExecutive();
 
-  const title = String(formData.get("title") ?? "").trim();
-  const body = String(formData.get("body") ?? "").trim();
-  const urgent = formData.get("urgent") === "on";
-  const audience = ROLES.filter((role) => formData.get(`audience_${role}`) === "on");
-
-  if (title.length < 3) return { ok: false, message: "Give the notice a title." };
-  if (body.length < 3) return { ok: false, message: "Write the announcement body." };
+  const fields = readAnnouncementFields(formData);
+  if (typeof fields === "string") return { ok: false, message: fields };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("announcements").insert({
-    title,
-    body,
-    urgent,
-    // No boxes ticked means everyone.
-    audience: audience.length > 0 && audience.length < ROLES.length ? audience : null,
-    created_by: profile.id,
-  });
+  const { error } = await supabase
+    .from("announcements")
+    .insert({ ...fields, created_by: profile.id });
 
   if (error) return { ok: false, message: error.message };
 
-  revalidatePath("/announcements");
-  revalidatePath("/dashboard");
-  revalidatePath("/admin/announcements");
+  revalidateAnnouncements();
 
   return { ok: true, message: "Announcement posted." };
+}
+
+/**
+ * Fixes a posted notice in place — a wrong deadline, a broken form link, a
+ * typo that is already on every phone in the hall.
+ *
+ * `created_at` is left alone deliberately: an edited notice keeps its place in
+ * the list rather than jumping to the top, so correcting a typo does not read
+ * as a second announcement. The pulse trigger fires on the update, so open
+ * tabs pick the correction up without a refresh.
+ */
+export async function updateAnnouncement(
+  id: string,
+  _prev: AnnouncementResult | null,
+  formData: FormData,
+): Promise<AnnouncementResult> {
+  await requireExecutive();
+
+  const fields = readAnnouncementFields(formData);
+  if (typeof fields === "string") return { ok: false, message: fields };
+
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("announcements")
+    .update(fields, { count: "exact" })
+    .eq("id", id);
+
+  if (error) return { ok: false, message: error.message };
+  if (!count) return { ok: false, message: "That announcement no longer exists." };
+
+  revalidateAnnouncements();
+
+  return { ok: true, message: "Announcement updated." };
+}
+
+/** Takes a notice down everywhere. There is no undo, hence the confirm step. */
+export async function deleteAnnouncement(id: string): Promise<AnnouncementResult> {
+  await requireExecutive();
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("announcements").delete().eq("id", id);
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidateAnnouncements();
+
+  return { ok: true, message: "Announcement deleted." };
 }
 
 export async function setQuizPublished(quizId: string, published: boolean) {
